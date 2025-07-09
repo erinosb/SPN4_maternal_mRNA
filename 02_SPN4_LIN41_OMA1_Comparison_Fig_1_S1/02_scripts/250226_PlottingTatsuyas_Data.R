@@ -23,6 +23,7 @@ library(viridis)
 library(apeglm)
 library(DESeq2)
 library(extrafont)
+library(UpSetR)
 
 ###########  READ IN THE DATA  #####################
 
@@ -113,11 +114,12 @@ text(filtered_SPN4_PlusMean$MEAN_Log2_SPN4_FPKM,
      pos = 4, 
      cex = 0.75)
 
+
+# Save a plot 
 today <- format(Sys.Date(),"%Y%m%d")
 file1 <- paste("03_figures/", today, "_MA_plot.pdf", sep = "")
 pdf(file1, height = 6, width = 6)
 par(mfrow=c(1,1), pty="s")
-
 
 plot(AllGenes_SPN4_PlusMean$MEAN_Log2_SPN4_FPKM, AllGenes_SPN4_PlusMean$spn4_enrichment,
      ylim = c(-8, 8),
@@ -147,7 +149,9 @@ text(filtered_SPN4_PlusMean$MEAN_Log2_SPN4_FPKM,
 
 dev.off()
 
-# HISTOGRAM
+# EDA - Create histograms
+
+# These are useful to ensure that our data is "well behaved". There are no associated figures or supplemental figures for this analysis.
 
 par(mfrow=c(1,1))
 histo1 <- ggplot(data=long_SPN4, aes(x=value, group=enrichment, fill=enrichment)) +
@@ -170,21 +174,12 @@ histo2 <- ggplot(data=long_SPN4, aes(x=value, group=enrichment, fill=enrichment)
 
 histo2
 
-
-
-# Draw the HISTOGRAM and save as a .pdf file
-ggsave(histo1, filename = "03_figures/240724_histogram.pdf", device = cairo_pdf, 
-       width = 6, height = 6, units = "in")
-
-
-############### X Y Scatter Facets #################
-
-
-
 ############### CORR Matrix ############################
 
-
+# SUPPLEMENTAL FIGURE 1
+# This is a nice correlation matrix 
 # Create a matrix
+
 head(AllGenes_SPN4)
 str(AllGenes_SPN4)
 dim(AllGenes_SPN4)
@@ -223,24 +218,27 @@ p <- pheatmap(sampleDistMatrix,
 
 p
 
-pdf("03_figures/240724_corr_matrix_plots.pdf", height = 6, width = 7)
+# Save the plot 
+today <- format(Sys.Date(),"%Y%m%d")
+file2 <- paste("03_figures/", today, "_corr_matrix_plots.pdf", sep = "")
+
+pdf(file2, height = 6, width = 7)
 par(mfrow=c(1,1))
 p
 
 dev.off()
 
-help(dist)
-
 ################# HEATMAP #################
 
+## SUPPLEMENTAL FIGURE 1
+
+## This is a pretty restricted heatmap. It shows only mRNAs with dramatically changing dynamics between SPN-4, LIN-41, and OMA-1. We didn't include this in the paper. Instead, we created a more expansive heatmap (see below) where there wasn't a strict changing dynamic used for filtering. 
+## A nice heatmap showing enriched genes and how their enrichment differs in SPN-4, LIN-41, and OMA-1 IPs.
+
 ## REVIEW:
-## Create a matrix
 # head(AllGenes_SPN4)
 # str(AllGenes_SPN4)
 #dim(AllGenes_SPN4)
-
-## REVIEW:
-
 
 # Calculate standard deviations
 SPN4_wide_stringentCutoff1 <- cbind(AllGenes_SPN4, stdev =  apply(AllGenes_SPN4[, 6:8], 1, sd))
@@ -281,12 +279,16 @@ q <- pheatmap(stringentMatrix,
 
 q
 
+# Save the plot 
+today <- format(Sys.Date(),"%Y%m%d")
+file3 <- paste("03_figures/", today, "_heatmap_strictly_changing.pdf", sep = "")
 
-pdf("03_figures/240724_heatmap_all.pdf", height = 9, width = 6)
+pdf(file3, height = 9, width = 6)
 q
 dev.off()
 
-# What about clustering?
+# What about clustering? How many clusters are there?
+# Note - this isn't a figure in the paper
 
 r <- pheatmap(stringentMatrix, 
               scale="row", 
@@ -328,57 +330,15 @@ s
 help(pheatmap)
 
 
-write.table(SPN4_wide_2cutoff_2FPKM, file = "03_figures/240731_clusters.txt", quote = FALSE, sep = "\t")
-help(write.table)
+#write.table(SPN4_wide_2cutoff_2FPKM, file = "03_figures/240731_clusters.txt", quote = FALSE, sep = "\t")
+#help(write.table)
 
-
-################# Make a HEATMAP of all GENES - no Z Score ##############
-
-# Calculate standard deviations
-SPN4_wide_stringentCutoff1 <- cbind(AllGenes_SPN4, stdev =  apply(AllGenes_SPN4[, 6:8], 1, sd))
-colnames(SPN4_wide_stringentCutoff1)
-head(SPN4_wide_stringentCutoff1)
-summary(SPN4_wide_stringentCutoff1$stdev)
-SPN4_wide_stringentCutoff1
-
-# Make the cutoffs
-## Select for enrichments over -2 and more than Log2(2)
-## Select for expression levels greater than e^2(4)
-## Select for stdev > 0.6
-
-# Make the cutoffs
-## Select for enrichments over -2 and more than Log2(2)
-## Select for expression levels greater than e^2(4)
-## Select for stdev > 0.6
-SPN4_expressed <- SPN4_wide_stringentCutoff1 %>%
-  filter(Log2_SPN.4_LYSATE_FPKM > 4)
-
-SPN4_expressed
-
-# Full heatmap of high-ish expression genes:
-dim(SPN4_expressed)
-head(SPN4_expressed)
-summary(SPN4_expressed$spn4_enrichment)
-
-SPN4_expressed
-
-laxMatrix <- as.matrix(SPN4_expressed[,c(6,7,8)])
-rownames(laxMatrix) <- SPN4_expressed$name
-
-dim(laxMatrix)
-
-t <- pheatmap(laxMatrix, 
-              color = colorRampPalette(c("blue4", "white", "maroon2"), space = "Lab")(100),
-              cluster_rows=TRUE, 
-              cluster_cols=FALSE, 
-              clustering_distance_rows = "euclidean", 
-              clustering_method = "complete",
-              cutree_rows = 5,
-              show_rownames = FALSE)
-
-t
 
 ################# HEATMAP OF GENES WITH AT LEAST ONE BINDING SITE #################
+
+# The above heatmap was a little too stringent because it required that there be changing dynamics between the enrichment IPs. What we really want to see instead is all mRNAs represented. So, the filter will be - is a transcript IP'd by at least one of these RBPs. Also, we're going to plot this so that there is no z-scaling. This will help us better visualize when a gene's enrichment is equal across all columns.
+
+## Supplemental Figure 1
 
 # Calculate enrichment sum (Sum of SPN4 == TRUE +  OMA1 == TRUE LIN41 == TRUE)
 
@@ -413,9 +373,11 @@ u <- pheatmap(anyBoundMatrix,
 
 u
 
-today <- format(Sys.Date(), "%y%m%d")
-filename1 <- paste("03_figures/", today, "_Heatmap_BoundTargets_noScale.pdf", sep = "")
-pdf(filename1, height = 9, width = 6)
+# Save the plot 
+today <- format(Sys.Date(),"%Y%m%d")
+file4 <- paste("03_figures/", today, "_Heatmap_BoundTargets_noScale.pdf", sep = "")
+
+pdf(file4, height = 9, width = 6)
 u
 dev.off()
 
@@ -423,8 +385,14 @@ dev.off()
 
 ################# UPSET PLOT ##################
 
-install.packages("UpSetR")
-library(UpSetR)
+# I would like to show an upset plot to illustrate the overlap between different categories (SPN-4 enrichment, OMA-1 enrichment, LIN-41 enrichment)
+
+## Figure 1
+
+## Note - uses the UpSetR package 
+
+#install.packages("UpSetR")
+#library(UpSetR)
 
 allMatrix <- AllGenes_SPN4[,c(3,4,5)]
 rownames(allMatrix) <- AllGenes_SPN4$name
@@ -434,30 +402,51 @@ allNumericMatrix <- 1*allMatrix
 
 upset(allNumericMatrix, text.scale=2)
 
-help(upset)
-help(upset)
-today <- format(Sys.Date(), "%y%m%d")
-filename <- paste("03_figures/", today, "_upsetPlot.pdf", sep = "")
+# Save the plot 
+today <- format(Sys.Date(),"%Y%m%d")
+file5 <- paste("03_figures/", today, "_upsetPlot.pdf", sep = "")
 
-pdf(filename, height = 4, width = 8)
+pdf(file5, height = 4, width = 8)
 upset(allNumericMatrix, text.scale=2)
 dev.off()
 
 
 ### SAVE a bunch of lists for GO Ontology Analysis #############
 
+# These are lists of all the sets of genes (WBGENE IDs) from all the different categories
 
+today <- format(Sys.Date(),"%Y%m%d")
 length(AllGenes_SPN4$gene_ID)
-write(AllGenes_SPN4$gene_ID, file = "03_figures/250227_ALLlist.txt")
+write(AllGenes_SPN4$gene_ID, file = paste("04_output_data/", today, "_ALLlist.txt"))
 
-#Gene IDs - OMA1 only
+# Gene IDs - bound by a single RBP independent of any other binding
+OMA1_list <- AllGenes_SPN4 %>%
+  filter(OMA1 == TRUE)
+OMA1_list$gene_ID
+length(OMA1_list$gene_ID)
+write(OMA1_list$gene_ID, file = paste("04_output_data/", today, "_OMA1_list.txt"))
+
+SPN4_list <- AllGenes_SPN4 %>%
+  filter(SPN4 == TRUE)
+SPN4_list$gene_ID
+length(SPN4_list$gene_ID)
+write(SPN4_list$gene_ID, file = paste("04_output_data/", today, "_SPN4_list.txt"))
+
+LIN41_list <- AllGenes_SPN4 %>%
+  filter(LIN41 == TRUE)
+LIN41_list$gene_ID
+length(LIN41_list$gene_ID)
+write(LIN41_list$gene_ID, file = paste("04_output_data/", today, "_LIN41_list.txt"))
+
+
+#Gene IDs - Single RBP binding only (no overlap with another RBP)
 OMA1_only <- AllGenes_SPN4 %>%
   filter(OMA1 == TRUE) %>%
   filter(SPN4 == FALSE) %>%
   filter(LIN41 == FALSE)
 OMA1_only$gene_ID
 length(OMA1_only$gene_ID)
-write(OMA1_only$gene_ID, file = "03_figures/250226_OMA1list.txt")
+write(OMA1_only$gene_ID, file = paste("04_output_data/", today, "_OMA1_ONLY_list.txt"))
 
 SPN4_only <- AllGenes_SPN4 %>%
   filter(OMA1 == FALSE) %>%
@@ -465,9 +454,7 @@ SPN4_only <- AllGenes_SPN4 %>%
   filter(LIN41 == FALSE)
 SPN4_only$gene_ID
 length(SPN4_only$gene_ID)
-getwd()
-write(SPN4_only$gene_ID, file = "03_figures/250226_SPN4list.txt")
-help(write)
+write(SPN4_only$gene_ID, file = paste("04_output_data/", today, "_SPN4_ONLY_list.txt"))
 
 LIN41_only <- AllGenes_SPN4 %>%
   filter(OMA1 == FALSE) %>%
@@ -475,17 +462,16 @@ LIN41_only <- AllGenes_SPN4 %>%
   filter(LIN41 == TRUE)
 LIN41_only$gene_ID
 length(LIN41_only$gene_ID)
-write(LIN41_only$gene_ID, file = "03_figures/250226_LIN41list.txt")
-help(write)
+write(LIN41_only$gene_ID, file = paste("04_output_data/", today, "_LIN41_ONLY_list.txt"))
 
+# Overlapping sets between two RBPs
 LIN41_SPN4 <- AllGenes_SPN4 %>%
   filter(OMA1 == FALSE) %>%
   filter(SPN4 == TRUE) %>%
   filter(LIN41 == TRUE)
 LIN41_SPN4$gene_ID
 length(LIN41_SPN4$gene_ID)
-getwd()
-write(LIN41_SPN4$gene_ID, file = "03_figures/250226_LIN4_and_SPN4_1list.txt")
+write(LIN41_SPN4$gene_ID, file = paste("04_output_data/", today, "_LIN41_and_SPN4_list.txt"))
 
 
 OMA1_SPN4 <- AllGenes_SPN4 %>%
@@ -494,8 +480,7 @@ OMA1_SPN4 <- AllGenes_SPN4 %>%
   filter(LIN41 == FALSE)
 OMA1_SPN4$gene_ID
 length(OMA1_SPN4$gene_ID)
-getwd()
-write(OMA1_SPN4$gene_ID, file = "03_figures/250227_OMA1_SPN4_1list.txt")
+write(OMA1_SPN4$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_list.txt"))
 
 OMA1_LIN41 <- AllGenes_SPN4 %>%
   filter(OMA1 == TRUE) %>%
@@ -503,8 +488,7 @@ OMA1_LIN41 <- AllGenes_SPN4 %>%
   filter(LIN41 == TRUE)
 OMA1_LIN41$gene_ID
 length(OMA1_LIN41$gene_ID)
-getwd()
-write(OMA1_LIN41$gene_ID, file = "03_figures/250227_OMA1_LIN41_1list.txt")
+write(OMA1_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_LIN41_list.txt"))
 
 OMA1_SPN4_LIN41 <- AllGenes_SPN4 %>%
   filter(OMA1 == TRUE) %>%
@@ -512,11 +496,14 @@ OMA1_SPN4_LIN41 <- AllGenes_SPN4 %>%
   filter(LIN41 == TRUE)
 OMA1_SPN4_LIN41$gene_ID
 length(OMA1_SPN4_LIN41$gene_ID)
-getwd()
-write(OMA1_SPN4_LIN41$gene_ID, file = "03_figures/250227_OMA1_SPN4_LIN41_1list.txt")
+write(OMA1_SPN4_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_LIN41_list.txt"))
 
 
 ################# HEATMAP OF SELECT GENES #################
+
+## I want to make a heatmap of select genes that are assayed later in Figure 3
+
+## No figure. Built into a Figure for Figure 3 in section below.
 
 #Heatmap of key assayed genes:
 
@@ -532,10 +519,7 @@ filtered_SPN4 <- AllGenes_SPN4 %>%
 
 filtered_SPN4
 
-
-# Input smFISH Fold Change data:
-setwd("~/Library/CloudStorage/Dropbox/LABWORK/PROJECTS/EOP248_spn4_dataAnalysis/Parsing_Tatsuyas_data")
-
+# Input smFISH Fold Change data. It should be in the input folder
 getwd()
 smFISHFoldChange <- read.table(file = "01_input/240618_smFISH_foldChangeData.txt", header = TRUE) 
 smFISHFoldChange
@@ -556,7 +540,7 @@ joined_filtered_matrix1
 joined_filtered_matrix2 <- joined_filtered_matrix1[,7:9]
 joined_filtered_matrix2
 
-s <- pheatmap(joined_filtered_matrix2[,c(3,2,1)], 
+v <- pheatmap(joined_filtered_matrix2[,c(3,2,1)], 
               scale="none", 
               color = colorRampPalette(c("blue4", "white", "maroon2"), space = "Lab")(100),
               cluster_rows=FALSE, 
@@ -566,28 +550,21 @@ s <- pheatmap(joined_filtered_matrix2[,c(3,2,1)],
               border_color = "white", 
               show_rownames = TRUE)
 
-s
+v
 
+# Save the plot:
+#today <- format(Sys.Date(),"%Y%m%d")
+#file6 <- paste("03_figures/", today, "_heatmap_smFISH_selecteGenes.pdf", sep = "")
 
-pdf("03_figures/240724_heatmap_smFISH_selecteGenes.pdf", height = 9, width = 6)
-s
-dev.off()
-
-
-
+#pdf(file6, height = 9, width = 6)
+#v
+#dev.off()
 
 ########## Fold CHange V. SPN Enrich V. Express. Level #######
 
+## Figure 3
 
-
-
-
-########### FILTERING BY EXPRESSION LEVEL ##################
-
-
-##########################################
-
-#Heatmap of key assayed genes:
+#Heatmap of key assayed genes plotted to include the expression level as well as their expression levels as this seems to make a difference
 
 # Subset
 joined_filtered_matrix2 <- joined_filtered_matrix1 %>%
@@ -595,7 +572,7 @@ joined_filtered_matrix2 <- joined_filtered_matrix1 %>%
 
 joined_filtered_matrix2
 
-u <- pheatmap(joined_filtered_matrix2[,10], 
+w <- pheatmap(joined_filtered_matrix2[,10], 
               scale="none", 
               color = colorRampPalette(c("darkgreen", "white", "orange"), space = "Lab")(100),
               cluster_rows=FALSE, 
@@ -605,19 +582,24 @@ u <- pheatmap(joined_filtered_matrix2[,10],
               border_color = "white", 
               show_rownames = TRUE)
 
-u
+w
 
-pdf("03_figures/heatmap_over2lysatePlusExp.pdf", height = 9, width = 6)
-u
+# Save the plot 
+today <- format(Sys.Date(),"%Y%m%d")
+file7 <- paste("03_figures/", today, "_heatmap_smFISH_over2lysate_PlusExp.pdf", sep = "")
+
+pdf(file7, height = 9, width = 6)
+w
 dev.off()
 
-colnames(joined_filtered_matrix2)
+######### SAVE SESSION INFO ###############
 
-sp2<-ggplot(joined_filtered_matrix2, aes(x=spn4_enrichment, y=foldChange, color=Log2_SPN.4_LYSATE_FPKM)) + 
-  geom_point()
-sp2
-# Change the low and high colors
-# Sequential color scheme
+today <- format(Sys.Date(),"%Y%m%d")
+file8 <- paste("04_output_data/", today, "_sessionInfo.txt", sep = "")
 
-sp2+scale_color_gradientn(colours = rainbow(4))
 
+writeLines(capture.output(sessionInfo()), file8)
+
+################################
+##         END SCRIPT         ##
+################################
