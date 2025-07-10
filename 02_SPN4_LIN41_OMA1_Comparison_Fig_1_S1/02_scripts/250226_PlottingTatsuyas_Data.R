@@ -589,6 +589,7 @@ w <- pheatmap(joined_filtered_matrix2[,c(10)],
               show_rownames=TRUE)
 
 w
+help(pheatmap)
 
 # Save the plot 
 today <- format(Sys.Date(),"%Y%m%d")
