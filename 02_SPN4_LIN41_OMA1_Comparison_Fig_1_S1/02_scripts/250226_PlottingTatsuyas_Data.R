@@ -33,24 +33,31 @@ setwd("~/Library/CloudStorage/Dropbox/github/SPN4_maternal_mRNA/02_SPN4_LIN41_OM
 
 #Import the combined "Enrichment" and "Probe" information. There are some duplicates
 getwd()
-enriched_SPN4 <- read.table(file = "01_input/RenamedCOLS_combined_results_w_kimbleData_and_stoeckiusData_Tue_Jun_18_2024_1953.txt", header = TRUE, fill = TRUE) 
+unfiltered_SPN4data <- read.table(file = "01_input/Tsukamoto_SuppData_SPN4_LIN41_OMA1_IP_RNAseq2.txt", header = TRUE, fill = TRUE) 
 
 # EDA
-dim(enriched_SPN4)
-str(enriched_SPN4)
+dim(unfiltered_SPN4data)
+str(unfiltered_SPN4data)
 
 # There are 46122 genes
-head(enriched_SPN4)
+head(unfiltered_SPN4data)
 
 # Remove miRNAs, cTel, poorly annotated genes:
-colnames(enriched_SPN4)
-AllGenes_SPN4 <- enriched_SPN4 %>%
+colnames(unfiltered_SPN4data)
+MostGenesSPN4 <- unfiltered_SPN4data %>%
   filter(!str_detect(name, pattern = "cTel")) %>%
   filter(!str_detect(name, pattern = "21u")) %>%
-  filter(!is.na(Stoeckius_twoCell_RPKM)) %>%
   filter(!is.na(spn4_enrichment))
 
-# Now there are 14,563 genes
+# Remove low expression genes:
+AllGenes_SPN4 <- MostGenesSPN4 %>%
+  mutate(mean = (Log2_SPN.4_LYSATE_FPKM + Log2_OMA.1_LYSATE_FPKM +  Log2_LIN.41_LYSATE_FPKM) / 3) %>%
+  filter( mean > -2.5)
+
+str(AllGenes_SPN4)
+
+
+# Now there are 16,917 genes in the AllGenes_SPN4 object
 str(AllGenes_SPN4)
 
 
@@ -113,7 +120,6 @@ text(filtered_SPN4_PlusMean$MEAN_Log2_SPN4_FPKM,
      filtered_SPN4_PlusMean$name,
      pos = 4, 
      cex = 0.75)
-
 
 # Save a plot 
 today <- format(Sys.Date(),"%Y%m%d")
@@ -193,6 +199,8 @@ SPN4_wide_2cutoff_2FPKM <- AllGenes_SPN4 %>%
 # Create rownames
 rownames(SPN4_wide_2cutoff_2FPKM) <- SPN4_wide_2cutoff_2FPKM$gene_ID
 
+
+
 # Trim and create a matrix:
 SPN4_widematrix2 <- SPN4_wide_2cutoff_2FPKM[,6:8]
 SPN4_widematrix2
@@ -265,7 +273,7 @@ summary(SPN4_wide_stringentCutoff2$spn4_enrichment)
 SPN4_wide_stringentCutoff2
 
 stringentMatrix <- as.matrix(SPN4_wide_stringentCutoff2[,c(6,7,8)])
-rownames(stringentMatrix) <- SPN4_wide_stringentCutoff2$name
+rownames(stringentMatrix) <- SPN4_wide_stringentCutoff2$gene_ID
 
 stringentMatrix
 q <- pheatmap(stringentMatrix, 
@@ -279,13 +287,6 @@ q <- pheatmap(stringentMatrix,
 
 q
 
-# Save the plot 
-today <- format(Sys.Date(),"%Y%m%d")
-file3 <- paste("03_figures/", today, "_heatmap_strictly_changing.pdf", sep = "")
-
-pdf(file3, height = 9, width = 6)
-q
-dev.off()
 
 # What about clustering? How many clusters are there?
 # Note - this isn't a figure in the paper
@@ -297,17 +298,18 @@ r <- pheatmap(stringentMatrix,
               cluster_cols=FALSE, 
               clustering_distance_rows = "euclidean", 
               clustering_method = "complete",
-              cutree_rows = 5,
+              cutree_rows = 7,
               show_rownames = FALSE)
 
 r
 
-help(pheatmap)
 
 # append clusters into the same data frame
-cl = cutree(r$tree_row,k = 5)
+cl = cutree(r$tree_row,k = 7)
 cl
 ann = data.frame(cl)
+stringentMatrix
+
 rownames(ann) <- rownames(stringentMatrix)
 SPN4_wide_2cutoff_2FPKM <- cbind(SPN4_wide_stringentCutoff2, 
                       cluster = cl)
@@ -321,17 +323,20 @@ s <- pheatmap(stringentMatrix,
               cluster_cols=FALSE, 
               clustering_distance_rows = "euclidean", 
               clustering_method = "complete",
-              cutree_rows = 5,
+              cutree_rows = 7,
               show_rownames = FALSE,
               annotation_row=ann)
 
 s
 
-help(pheatmap)
+# Save the plot 
+today <- format(Sys.Date(),"%Y%m%d")
+file3 <- paste("03_figures/", today, "_heatmap_strictly_changing.pdf", sep = "")
+pdf(file3, height = 9, width = 6)
 
+s
 
-#write.table(SPN4_wide_2cutoff_2FPKM, file = "03_figures/240731_clusters.txt", quote = FALSE, sep = "\t")
-#help(write.table)
+dev.off()
 
 
 ################# HEATMAP OF GENES WITH AT LEAST ONE BINDING SITE #################
@@ -341,11 +346,12 @@ help(pheatmap)
 ## Supplemental Figure 1
 
 # Calculate enrichment sum (Sum of SPN4 == TRUE +  OMA1 == TRUE LIN41 == TRUE)
+# Start with the raw data unfiltered_SPN4data instead of AllGenes_SPN4 because the unfiltered_SPN4data isn't filtered by gene expressio level
 
-AllGenes_SPN4
+unfiltered_SPN4data
 
-AllGenes_SPN4$LIN41 <- as.logical(AllGenes_SPN4$LIN41)
-SPN4_SUM <- cbind(AllGenes_SPN4, sum =  apply(AllGenes_SPN4[, 3:5], 1, sum))
+unfiltered_SPN4data$LIN41 <- as.logical(unfiltered_SPN4data$LIN41)
+SPN4_SUM <- cbind(unfiltered_SPN4data, sum =  apply(unfiltered_SPN4data[, 3:5], 1, sum))
 colnames(SPN4_SUM)
 head(SPN4_SUM)
 table(SPN4_SUM$sum)
@@ -390,15 +396,17 @@ dev.off()
 ## Figure 1
 
 ## Note - uses the UpSetR package 
+# Start with the raw data unfiltered_SPN4data instead of AllGenes_SPN4 because the unfiltered_SPN4data isn't filtered by gene expressio level
 
-#install.packages("UpSetR")
-#library(UpSetR)
+unfiltered_SPN4data
 
-allMatrix <- AllGenes_SPN4[,c(3,4,5)]
-rownames(allMatrix) <- AllGenes_SPN4$name
+
+allMatrix <- unfiltered_SPN4data[,c(3,4,5)]
+rownames(allMatrix) <- unfiltered_SPN4data$name
 
 allNumericMatrix <- 1*allMatrix
 
+AllGenes_SPN4[(duplicated(AllGenes_SPN4$name)),]
 
 upset(allNumericMatrix, text.scale=2)
 
@@ -416,23 +424,23 @@ dev.off()
 # These are lists of all the sets of genes (WBGENE IDs) from all the different categories
 
 today <- format(Sys.Date(),"%Y%m%d")
-length(AllGenes_SPN4$gene_ID)
-write(AllGenes_SPN4$gene_ID, file = paste("04_output_data/", today, "_ALLlist.txt"))
+length(unfiltered_SPN4data$gene_ID)
+write(unfiltered_SPN4data$gene_ID, file = paste("04_output_data/", today, "_ALLlist.txt"))
 
 # Gene IDs - bound by a single RBP independent of any other binding
-OMA1_list <- AllGenes_SPN4 %>%
+OMA1_list <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE)
 OMA1_list$gene_ID
 length(OMA1_list$gene_ID)
 write(OMA1_list$gene_ID, file = paste("04_output_data/", today, "_OMA1_list.txt"))
 
-SPN4_list <- AllGenes_SPN4 %>%
+SPN4_list <- unfiltered_SPN4data %>%
   filter(SPN4 == TRUE)
 SPN4_list$gene_ID
 length(SPN4_list$gene_ID)
 write(SPN4_list$gene_ID, file = paste("04_output_data/", today, "_SPN4_list.txt"))
 
-LIN41_list <- AllGenes_SPN4 %>%
+LIN41_list <- unfiltered_SPN4data %>%
   filter(LIN41 == TRUE)
 LIN41_list$gene_ID
 length(LIN41_list$gene_ID)
@@ -440,7 +448,7 @@ write(LIN41_list$gene_ID, file = paste("04_output_data/", today, "_LIN41_list.tx
 
 
 #Gene IDs - Single RBP binding only (no overlap with another RBP)
-OMA1_only <- AllGenes_SPN4 %>%
+OMA1_only <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE) %>%
   filter(SPN4 == FALSE) %>%
   filter(LIN41 == FALSE)
@@ -448,7 +456,7 @@ OMA1_only$gene_ID
 length(OMA1_only$gene_ID)
 write(OMA1_only$gene_ID, file = paste("04_output_data/", today, "_OMA1_ONLY_list.txt"))
 
-SPN4_only <- AllGenes_SPN4 %>%
+SPN4_only <- unfiltered_SPN4data %>%
   filter(OMA1 == FALSE) %>%
   filter(SPN4 == TRUE) %>%
   filter(LIN41 == FALSE)
@@ -456,7 +464,7 @@ SPN4_only$gene_ID
 length(SPN4_only$gene_ID)
 write(SPN4_only$gene_ID, file = paste("04_output_data/", today, "_SPN4_ONLY_list.txt"))
 
-LIN41_only <- AllGenes_SPN4 %>%
+LIN41_only <- unfiltered_SPN4data %>%
   filter(OMA1 == FALSE) %>%
   filter(SPN4 == FALSE) %>%
   filter(LIN41 == TRUE)
@@ -465,7 +473,7 @@ length(LIN41_only$gene_ID)
 write(LIN41_only$gene_ID, file = paste("04_output_data/", today, "_LIN41_ONLY_list.txt"))
 
 # Overlapping sets between two RBPs
-LIN41_SPN4 <- AllGenes_SPN4 %>%
+LIN41_SPN4 <- unfiltered_SPN4data %>%
   filter(OMA1 == FALSE) %>%
   filter(SPN4 == TRUE) %>%
   filter(LIN41 == TRUE)
@@ -474,7 +482,7 @@ length(LIN41_SPN4$gene_ID)
 write(LIN41_SPN4$gene_ID, file = paste("04_output_data/", today, "_LIN41_and_SPN4_list.txt"))
 
 
-OMA1_SPN4 <- AllGenes_SPN4 %>%
+OMA1_SPN4 <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE) %>%
   filter(SPN4 == TRUE) %>%
   filter(LIN41 == FALSE)
@@ -482,7 +490,7 @@ OMA1_SPN4$gene_ID
 length(OMA1_SPN4$gene_ID)
 write(OMA1_SPN4$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_list.txt"))
 
-OMA1_LIN41 <- AllGenes_SPN4 %>%
+OMA1_LIN41 <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE) %>%
   filter(SPN4 == FALSE) %>%
   filter(LIN41 == TRUE)
@@ -490,7 +498,7 @@ OMA1_LIN41$gene_ID
 length(OMA1_LIN41$gene_ID)
 write(OMA1_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_LIN41_list.txt"))
 
-OMA1_SPN4_LIN41 <- AllGenes_SPN4 %>%
+OMA1_SPN4_LIN41 <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE) %>%
   filter(SPN4 == TRUE) %>%
   filter(LIN41 == TRUE)
@@ -510,12 +518,10 @@ write(OMA1_SPN4_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN
 assayedGenes <- c("chs-1", "lin-41", "cpg-2", "oma-2", "car-1", "mex-5", "C04B4.2", "nos-1", "egg-3", "Y37H2A.12", "ZK666.4", "pigv-1", "npr-35", "nasp-2", "R05H11.1", "cgh-1", "mcm-2", "vab-2", "Y19D2B.2")
 
 length(assayedGenes)
-length(intersect(AllGenes_SPN4$name, assayedGenes) )
-# Not in the dataset: mex-5, Y37HA.12, pigv-1, mcm-2, nasp-2
+length(intersect(unfiltered_SPN4data$name, assayedGenes) )
 
-
-filtered_SPN4 <- AllGenes_SPN4 %>%
-  filter(AllGenes_SPN4$name %in% assayedGenes)
+filtered_SPN4 <- unfiltered_SPN4data %>%
+  filter(unfiltered_SPN4data$name %in% assayedGenes)
 
 filtered_SPN4
 
@@ -553,12 +559,12 @@ v <- pheatmap(joined_filtered_matrix2[,c(3,2,1)],
 v
 
 # Save the plot:
-#today <- format(Sys.Date(),"%Y%m%d")
-#file6 <- paste("03_figures/", today, "_heatmap_smFISH_selecteGenes.pdf", sep = "")
+today <- format(Sys.Date(),"%Y%m%d")
+file6 <- paste("03_figures/", today, "_heatmap_smFISH_selecteGenes.pdf", sep = "")
 
-#pdf(file6, height = 9, width = 6)
-#v
-#dev.off()
+pdf(file6, height = 9, width = 6)
+v
+dev.off()
 
 ########## Fold CHange V. SPN Enrich V. Express. Level #######
 
@@ -570,9 +576,9 @@ v
 joined_filtered_matrix2 <- joined_filtered_matrix1 %>%
   arrange(desc(foldChange))
 
-joined_filtered_matrix2
+str(joined_filtered_matrix2)
 
-w <- pheatmap(joined_filtered_matrix2[,10], 
+w <- pheatmap(joined_filtered_matrix2[,c(10)], 
               scale="none", 
               color = colorRampPalette(c("darkgreen", "white", "orange"), space = "Lab")(100),
               cluster_rows=FALSE, 
@@ -580,7 +586,7 @@ w <- pheatmap(joined_filtered_matrix2[,10],
               clustering_distance_rows = "euclidean", 
               clustering_method = "complete",
               border_color = "white", 
-              show_rownames = TRUE)
+              show_rownames=TRUE)
 
 w
 
