@@ -599,10 +599,102 @@ pdf(file7, height = 9, width = 6)
 w
 dev.off()
 
+######### Compare this dataset to the Tsukamoto et al., Genetics 2017 LIN-41 and OMA-1 IP + RNAseq dataset ###########
+
+## Supplemental Figure S1 
+
+# Merge the 2017 dataset with data from this manuscript
+# import the supplemental data from Tsukamoto et al., Genetics, 2017. file3.txt: 
+tsukamoto2017_data <- read.table(file = "01_input/files3_Tsukamoto2017_RNAseq.txt", header = TRUE, fill = TRUE) 
+
+# EDA
+head(tsukamoto2017_data$Oma.1_042310)
+colnames(unfiltered_SPN4data)
+colnames(tsukamoto2017_data)
+
+# Merge with the data from this manuscript
+joined_2017_and_2025 <- left_join(unfiltered_SPN4data, tsukamoto2017_data, by = c("gene_ID" = "Ensembl_ID"))
+
+# EDA
+dim(unfiltered_SPN4data)
+dim(tsukamoto2017_data)
+dim(joined_2017_and_2025)
+
+################ OMA1 - calculate correlation:
+# Calculate Correlation
+cor_oma1_2017_v_2025 <- cor(joined_2017_and_2025$oma1_enrichment, joined_2017_and_2025$Oma.1_IP, , use = "pairwise.complete.obs")
+cor_oma1_2017_v_2025
+text_oma1 <- paste("r2 = ", round(cor_oma1_2017_v_2025, 2), sep = "")
+text_oma1
+
+# Subset OMA-1 significantly enriched transcripts from 2025 IP. Do they have similarly high levels in OMA-1 IP from 2017?
+subset_oma1_true <- joined_2017_and_2025[which(joined_2017_and_2025$OMA1 == TRUE), ]
+dim(subset_oma1_true)
+
+# Plot OMA-1 correlation
+par(pty="s")
+plot(joined_2017_and_2025$oma1_enrichment, joined_2017_and_2025$Oma.1_IP, pch = 20, col = "#838B8B22",
+     xlim = c(-2.5, 10),
+     ylim = c(-2.5,10))
+points(subset_oma1_true$oma1_enrichment, subset_oma1_true$Oma.1_IP, pch = 20, col = "#1E90FF44")
+text(-1, 9, labels = text_oma1, col = "blue")
+abline(lm(Oma.1_IP ~ oma1_enrichment, data = joined_2017_and_2025), col = "blue")
+
+
+################ LIN-41 - calculate correlation:
+# Calculate Correlation
+cor_lin41_2017_v_2025 <- cor(joined_2017_and_2025$lin41_enrichment, joined_2017_and_2025$Lin.41_IP, , use = "pairwise.complete.obs")
+cor_lin41_2017_v_2025
+text_lin41 <- paste("r2 = ", round(cor_lin41_2017_v_2025, 2), sep = "")
+text_lin41
+
+# Subset LIN-41 significantly enriched transcripts from 2025 IP. Do they have similarly high levels in LIN-41 IP from 2017?
+subset_lin41_true <- joined_2017_and_2025[which(joined_2017_and_2025$LIN41 == TRUE), ]
+dim(subset_lin41_true)
+
+# Plot LIN-41 correlation
+par(pty="s")
+plot(joined_2017_and_2025$lin41_enrichment, joined_2017_and_2025$Lin.41_IP, pch = 20, col = "#838B8B22",
+     xlim = c(-2.5, 10),
+     ylim = c(-2.5,10))
+points(subset_lin41_true$lin41_enrichment, subset_lin41_true$Lin.41_IP, pch = 20, col = "#DA70D644")
+text(-1, 9, labels = text_lin41, col = "orchid4")
+abline(lm(Lin.41_IP ~ lin41_enrichment, data = joined_2017_and_2025), col = "orchid4")
+
+
+# Create plot 
+graphics.off()
+today <- format(Sys.Date(),"%Y%m%d")
+file8 <- paste("03_figures/", today, "_Compare_to_2017.pdf", sep = "")
+
+pdf(file8, height = 4, width = 8)
+
+par(mfrow = c(1,2), pty = "s")
+
+
+plot(joined_2017_and_2025$oma1_enrichment, joined_2017_and_2025$Oma.1_IP, pch = 20, col = "#838B8B22",
+     xlim = c(-2.5, 10),
+     ylim = c(-2.5,10))
+points(subset_oma1_true$oma1_enrichment, subset_oma1_true$Oma.1_IP, pch = 20, col = "#1E90FF44")
+text(0, 9, labels = text_oma1, col = "blue")
+abline(lm(Oma.1_IP ~ oma1_enrichment, data = joined_2017_and_2025), col = "blue")
+
+plot(joined_2017_and_2025$lin41_enrichment, joined_2017_and_2025$Lin.41_IP, pch = 20, col = "#838B8B22",
+     xlim = c(-2.5, 10),
+     ylim = c(-2.5,10))
+points(subset_lin41_true$lin41_enrichment, subset_lin41_true$Lin.41_IP, pch = 20, col = "#DA70D644")
+text(0, 9, labels = text_lin41, col = "orchid4")
+abline(lm(Lin.41_IP ~ lin41_enrichment, data = joined_2017_and_2025), col = "orchid4")
+
+dev.off()
+
+
 ######### SAVE SESSION INFO ###############
 
 today <- format(Sys.Date(),"%Y%m%d")
 file8 <- paste("04_output_data/", today, "_sessionInfo.txt", sep = "")
+
+
 
 
 writeLines(capture.output(sessionInfo()), file8)
