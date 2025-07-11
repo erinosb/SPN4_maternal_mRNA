@@ -506,6 +506,29 @@ OMA1_SPN4_LIN41$gene_ID
 length(OMA1_SPN4_LIN41$gene_ID)
 write(OMA1_SPN4_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_LIN41_list.txt"))
 
+################# SELECTION OF STATISTICS  #################
+
+# From Paper draft:
+
+# Overall, the overlap between these mRNA cohorts was greatest between LIN-41 and OMA-1 (Figure 1F, Supplementary Figure S1A, Supplementary Figure S1B). 30 % of the OMA-1 targets were shared with LIN-41 and, inversely, 40 % of LIN-41 targets were shared with OMA-1. In contrast, 14 – 25 % of mRNA sets were overlapping in combinations comparing SPN-4 associated mRNAs to either LIN-41 or OMA-1 sets. 
+
+# How many OMA-1 targets were shared with LIN-41?
+round((length(OMA1_LIN41$gene_ID) / length(OMA1_list$gene_ID ))*100, 2)
+
+# How many LIN-411 targets were shared withOMA-1?
+round((length(OMA1_LIN41$gene_ID) / length(LIN41_list$gene_ID ))*100, 2)
+
+# How many SPN-4 targets are shared with LIN-41?
+round((length(LIN41_SPN4$gene_ID) / length(SPN4_list$gene_ID ))*100, 2)
+
+# How many SPN-4 targets are shared with OMA-1?
+round((length(OMA1_SPN4$gene_ID) / length(SPN4_list$gene_ID ))*100, 2)
+
+# How many LIN-41 targets are shared with SPN-4?
+round((length(LIN41_SPN4$gene_ID) / length(LIN41_list$gene_ID ))*100, 2)
+
+# How many OMA-1 targets are shared with SPN-4?
+round((length(LIN41_SPN4$gene_ID) / length(OMA1_list$gene_ID ))*100, 2)
 
 ################# HEATMAP OF SELECT GENES #################
 
