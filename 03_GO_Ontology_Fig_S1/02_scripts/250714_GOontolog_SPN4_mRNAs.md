@@ -10,16 +10,11 @@ of SPN-4 associated mRNAs and other categories of mRNAs. We have SPN-4,
 LIN-41, and OMA-1 associated mRNA categories. What GO ontology
 categories are over-represented in these?
 
-Note - what is the best background data? I tried a few different
-“universe” or background datasets. I tried all present genes and
-compared that to all Worm Base genes (default for Cluster Profiler). In
+Note - what is the best background data? I tried two different
+“universe” or background datasets. 1) all present genes or 2) all Worm Base genes (default for Cluster Profiler). In
 the end, we chose the Worm Base geneset as a “universe” as this best
-addressed the question of what gene categories are enriched in the
-SPN-4, OMA-1, and LIN-41 associated mRNAs compared to all annotated
-genes. Using the set of present genes as “universe” did exclude some
-shared categories and better highlighted what differentiated SPN-4
-associated genes from OMA-1 or LIN-41 genes. Ultimately, we decided this
-wasn’t what we wanted to focus on.
+addressed the question: what gene categories are enriched in the
+SPN-4, OMA-1, and LIN-41 associated mRNAs?
 
 ## Load modules
 
