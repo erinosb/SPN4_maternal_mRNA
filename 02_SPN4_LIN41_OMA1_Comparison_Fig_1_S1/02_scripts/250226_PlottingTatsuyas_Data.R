@@ -24,6 +24,7 @@ library(apeglm)
 library(DESeq2)
 library(extrafont)
 library(UpSetR)
+library(stringr)
 
 ###########  READ IN THE DATA  #####################
 
@@ -44,6 +45,7 @@ head(unfiltered_SPN4data)
 
 # Remove miRNAs, cTel, poorly annotated genes:
 colnames(unfiltered_SPN4data)
+require(tidyverse)
 MostGenesSPN4 <- unfiltered_SPN4data %>%
   filter(!str_detect(name, pattern = "cTel")) %>%
   filter(!str_detect(name, pattern = "21u")) %>%
@@ -423,28 +425,35 @@ dev.off()
 
 # These are lists of all the sets of genes (WBGENE IDs) from all the different categories
 
+# All genes
 today <- format(Sys.Date(),"%Y%m%d")
 length(unfiltered_SPN4data$gene_ID)
-write(unfiltered_SPN4data$gene_ID, file = paste("04_output_data/", today, "_ALLlist.txt"))
+write(unfiltered_SPN4data$gene_ID, file = paste("04_output_data/", today, "_ALLlist.txt", sep = ""))
+
+# Present genes
+
+today <- format(Sys.Date(),"%Y%m%d")
+length(AllGenes_SPN4$gene_ID)
+write(AllGenes_SPN4$gene_ID, file = paste("04_output_data/", today, "_Presentlist.txt", sep = ""))
 
 # Gene IDs - bound by a single RBP independent of any other binding
 OMA1_list <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE)
 OMA1_list$gene_ID
 length(OMA1_list$gene_ID)
-write(OMA1_list$gene_ID, file = paste("04_output_data/", today, "_OMA1_list.txt"))
+write(OMA1_list$gene_ID, file = paste("04_output_data/", today, "_OMA1_list.txt", sep = ""))
 
 SPN4_list <- unfiltered_SPN4data %>%
   filter(SPN4 == TRUE)
 SPN4_list$gene_ID
 length(SPN4_list$gene_ID)
-write(SPN4_list$gene_ID, file = paste("04_output_data/", today, "_SPN4_list.txt"))
+write(SPN4_list$gene_ID, file = paste("04_output_data/", today, "_SPN4_list.txt", sep = ""))
 
 LIN41_list <- unfiltered_SPN4data %>%
   filter(LIN41 == TRUE)
 LIN41_list$gene_ID
 length(LIN41_list$gene_ID)
-write(LIN41_list$gene_ID, file = paste("04_output_data/", today, "_LIN41_list.txt"))
+write(LIN41_list$gene_ID, file = paste("04_output_data/", today, "_LIN41_list.txt", sep = ""))
 
 
 #Gene IDs - Single RBP binding only (no overlap with another RBP)
@@ -454,7 +463,7 @@ OMA1_only <- unfiltered_SPN4data %>%
   filter(LIN41 == FALSE)
 OMA1_only$gene_ID
 length(OMA1_only$gene_ID)
-write(OMA1_only$gene_ID, file = paste("04_output_data/", today, "_OMA1_ONLY_list.txt"))
+write(OMA1_only$gene_ID, file = paste("04_output_data/", today, "_OMA1_ONLY_list.txt", sep = ""))
 
 SPN4_only <- unfiltered_SPN4data %>%
   filter(OMA1 == FALSE) %>%
@@ -462,7 +471,7 @@ SPN4_only <- unfiltered_SPN4data %>%
   filter(LIN41 == FALSE)
 SPN4_only$gene_ID
 length(SPN4_only$gene_ID)
-write(SPN4_only$gene_ID, file = paste("04_output_data/", today, "_SPN4_ONLY_list.txt"))
+write(SPN4_only$gene_ID, file = paste("04_output_data/", today, "_SPN4_ONLY_list.txt", sep = ""))
 
 LIN41_only <- unfiltered_SPN4data %>%
   filter(OMA1 == FALSE) %>%
@@ -470,7 +479,7 @@ LIN41_only <- unfiltered_SPN4data %>%
   filter(LIN41 == TRUE)
 LIN41_only$gene_ID
 length(LIN41_only$gene_ID)
-write(LIN41_only$gene_ID, file = paste("04_output_data/", today, "_LIN41_ONLY_list.txt"))
+write(LIN41_only$gene_ID, file = paste("04_output_data/", today, "_LIN41_ONLY_list.txt", sep = ""))
 
 # Overlapping sets between two RBPs
 LIN41_SPN4 <- unfiltered_SPN4data %>%
@@ -479,7 +488,7 @@ LIN41_SPN4 <- unfiltered_SPN4data %>%
   filter(LIN41 == TRUE)
 LIN41_SPN4$gene_ID
 length(LIN41_SPN4$gene_ID)
-write(LIN41_SPN4$gene_ID, file = paste("04_output_data/", today, "_LIN41_and_SPN4_list.txt"))
+write(LIN41_SPN4$gene_ID, file = paste("04_output_data/", today, "_LIN41_and_SPN4_list.txt", sep = ""))
 
 
 OMA1_SPN4 <- unfiltered_SPN4data %>%
@@ -488,7 +497,7 @@ OMA1_SPN4 <- unfiltered_SPN4data %>%
   filter(LIN41 == FALSE)
 OMA1_SPN4$gene_ID
 length(OMA1_SPN4$gene_ID)
-write(OMA1_SPN4$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_list.txt"))
+write(OMA1_SPN4$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_list.txt", sep = ""))
 
 OMA1_LIN41 <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE) %>%
@@ -496,7 +505,7 @@ OMA1_LIN41 <- unfiltered_SPN4data %>%
   filter(LIN41 == TRUE)
 OMA1_LIN41$gene_ID
 length(OMA1_LIN41$gene_ID)
-write(OMA1_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_LIN41_list.txt"))
+write(OMA1_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_LIN41_list.txt", sep = ""))
 
 OMA1_SPN4_LIN41 <- unfiltered_SPN4data %>%
   filter(OMA1 == TRUE) %>%
@@ -504,7 +513,7 @@ OMA1_SPN4_LIN41 <- unfiltered_SPN4data %>%
   filter(LIN41 == TRUE)
 OMA1_SPN4_LIN41$gene_ID
 length(OMA1_SPN4_LIN41$gene_ID)
-write(OMA1_SPN4_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_LIN41_list.txt"))
+write(OMA1_SPN4_LIN41$gene_ID, file = paste("04_output_data/", today, "_OMA1_SPN4_LIN41_list.txt", sep = ""))
 
 ################# SELECTION OF STATISTICS  #################
 

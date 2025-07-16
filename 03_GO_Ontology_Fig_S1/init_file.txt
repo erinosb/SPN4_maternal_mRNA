@@ -1,3 +1,0 @@
-# Why is this file here? Because github won't let me add and push an empty directory.
-
-# Remove this file once new files are added to this directory.

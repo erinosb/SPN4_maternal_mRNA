@@ -1,0 +1,351 @@
+---
+title: "250714_GOontology_SPN4_mRNAs"
+author: "Erin Osborne Nishimura"
+date: "2025-07-14"
+output: github_document
+---
+
+## Goal of the project
+
+I want to detemrine which GO Ontology categories are enriched in the set of SPN-4 associated mRNAs and other categories of mRNAs. We have SPN-4, LIN-41, and OMA-1 associated mRNA categories. What GO ontology categories are over-represented in these?
+
+## Load modules
+
+Load the following modules: 
+
+  - clusterProfiler
+  - enrichplot
+  - ggplot2
+
+
+```{r echo=FALSE, warning = FALSE, message = FALSE}
+
+# Optional installation for cluster profiler:
+#if (!require("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+
+#BiocManager::install("clusterProfiler")
+
+# Load libraries:
+library(clusterProfiler)
+library(enrichplot)
+library(ggplot2)
+
+```
+
+## Initiate Cluster Profiler
+
+Select org.Ce.eg.db from 
+
+```{r load_elegans, echo=FALSE, warning = FALSE, message = FALSE}
+
+# BiocManager::install("org.Ce.eg.db")
+library(org.Ce.eg.db)
+organism = "org.Ce.eg.db"
+
+
+```
+
+## Import datasets 
+
+These datasets are lists that were generated in a previous analysis located in 02_SPN4_LIN41_OMA1_Comparison_Fig_1_S1/04_output_data located within this same github repository
+
+```{r import, echo=TRUE, warning = FALSE, message = FALSE}
+
+# set wd:
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+getwd()
+
+# import the data files
+SPN4_list <- read.table(file = "01_input/20250711_SPN4_list.txt", quote = "")
+SPN4_list2 <- sort(SPN4_list$V1, decreasing = TRUE)
+
+OMA1_list <- read.table(file = "01_input/20250711_OMA1_list.txt", quote = "")
+OMA1_list2 <- sort(OMA1_list$V1, decreasing = TRUE)
+
+LIN41_list <- read.table(file = "01_input/20250711_LIN41_list.txt", quote = "")
+LIN41_list2 <- sort(LIN41_list$V1, decreasing = TRUE)
+
+Present_list <- read.table(file = "01_input/20250715_Presentlist.txt", quote = "")
+Present_list2 <- sort(Present_list$V1, decreasing = TRUE)
+
+# merge datasets into a list of vectors:
+RBP_list_of_vectors <- list(SPN4 = SPN4_list2, OMA1 = OMA1_list2, LIN41 = LIN41_list2)
+```
+
+## Biological Processes 
+
+### Compare the clusters
+
+```{r compare, echo=TRUE}
+
+# Compare the clusters 
+compareRBPclusters_BP <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "BP", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_BP <- setReadable(compareRBPclusters_BP, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
+
+## S4 method for signature 'enrichResult'
+compareRBPclusters_BP_simple <- simplify( compareRBPclusters_BP,
+          cutoff = 0.6,
+          by = "p.adjust",
+          select_fun = min,
+          measure = "Wang",
+          semData = NULL)
+
+compareRBPclusters_BP
+compareRBPclusters_BP_simple
+
+# Plot the clusters
+dotplot(compareRBPclusters_BP_simple)
+
+
+
+```
+
+### Save the plot
+
+Print Biological Processes plot to a file. Use this in Supplemental Figure. 
+
+```{r printBP, echo=TRUE, message = FALSE, warning = FALSE}
+
+# Save the plot 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+pdf("03_output/SPN4_OMA1_LIN41_dotPlot_BP.pdf", height = 10, width = 10)
+cluster.p1 <- dotplot(compareRBPclusters_BP_simple, 
+              title = "GO Enrichment (Biological Process)")
+cluster.p1 + theme(
+  axis.text.y = element_text(size = 15),
+  axis.text.x = element_text(size = 15),
+  legend.text = element_text(size = 15)
+  )
+
+dev.off()
+```
+### Save the datasets 
+
+Use this in a Supplemental Datasets
+
+Also use this to annotate the Supplemental Figure with individual gene names
+
+```{r BPdata, echo = FALSE, message = FALSE}
+
+compareRBPclusters_BP_simple@compareClusterResult$Description
+
+compareRBPclusters_BP_simple@compareClusterResult$Description[1]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[1]
+
+compareRBPclusters_BP_simple@compareClusterResult$Description[2]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[2]
+
+compareRBPclusters_BP_simple@compareClusterResult$Description[3]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[3]
+
+compareRBPclusters_BP_simple@compareClusterResult$Description[30]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[30]
+
+compareRBPclusters_BP_simple@compareClusterResult$Description
+
+compareRBPclusters_BP_simple@compareClusterResult$Description[6]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[6]
+
+```
+
+## Molecular Function
+
+### Compare the clusters
+
+```{r compareMF, echo=FALSE, warning = FALSE, message = FALSE}
+
+# Compare the clusters 
+compareRBPclusters_MF <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "MF", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_MF <- setReadable(compareRBPclusters_MF, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
+
+## S4 method for signature 'enrichResult'
+compareRBPclusters_MF_simple <- simplify(compareRBPclusters_MF,
+          cutoff = 0.6,
+          by = "p.adjust",
+          select_fun = min,
+          measure = "Wang",
+          semData = NULL)
+
+#compareRBPclusters_MF
+#compareRBPclusters_MF_simple
+
+# Plot the clusters
+dotplot(compareRBPclusters_MF_simple)
+```
+
+### Save the plot
+
+Print the Molecular Function to a file
+
+```{r printMF, echo=TRUE, message = FALSE, warning = FALSE}
+
+# Save the plot 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+pdf("03_output/SPN4_OMA1_LIN41_dotPlot_MF.pdf", height = 5, width = 10)
+cluster.p1 <- dotplot(compareRBPclusters_MF_simple,
+              title = "GO Enrichment (Molecular Function)")
+cluster.p1 + theme(
+  axis.text.y = element_text(size = 15),
+  axis.text.x = element_text(size = 15),
+  legend.text = element_text(size = 15)
+  )
+
+dev.off()
+
+```
+
+## Cellular Components
+
+### Compare the clusters
+
+
+```{r compareCC, echo=FALSE, warning= FALSE, message = FALSE}
+
+# Compare the clusters 
+
+compareRBPclusters_CC <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "CC", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_CC <- setReadable(compareRBPclusters_CC, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
+
+## S4 method for signature 'enrichResult'
+compareRBPclusters_CC_simple <- simplify( compareRBPclusters_CC,
+          cutoff = 0.6,
+          by = "p.adjust",
+          select_fun = min,
+          measure = "Wang",
+          semData = NULL)
+
+#compareRBPclusters_CC
+#compareRBPclusters_CC_simple
+
+# Plot the clusters
+dotplot(compareRBPclusters_CC_simple)
+```
+### Save the plot
+
+Print Cellular Components to a file
+
+```{r printCC, echo=FALSE, warning = FALSE, message = FALSE}
+
+# Save the plot 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+pdf("03_output/SPN4_OMA1_LIN41_dotPlot_CC.pdf", height = 5, width = 10)
+cluster.p1 <- dotplot(compareRBPclusters_CC_simple,
+              title = "GO Enrichment (Cellular Component)")
+cluster.p1 + theme(
+  axis.text.y = element_text(size = 15),
+  axis.text.x = element_text(size = 15),
+  legend.text = element_text(size = 15)
+  )
+
+dev.off()
+
+```
+
+## ALL Categories
+
+### Compare the clusters
+
+All category ontologies
+
+```{r compareALL, echo=FALSE, message = FALSE, warning = FALSE}
+
+# Compare the clusters 
+
+compareRBPclusters_ALL <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "ALL", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_ALL <- setReadable(compareRBPclusters_ALL, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
+
+## S4 method for signature 'enrichResult'
+compareRBPclusters_ALL_simple <- simplify( compareRBPclusters_ALL,
+          cutoff = 0.6,
+          by = "p.adjust",
+          select_fun = min,
+          measure = "Wang",
+          semData = NULL)
+
+#compareRBPclusters_ALL
+#compareRBPclusters_ALL_simple
+
+# Plot the clusters
+dotplot(compareRBPclusters_ALL_simple)
+```
+### Save the plot
+
+Print Molecular Function plot to a file
+
+```{r printALL, echo=TRUE, warning = FALSE, message = FALSE}
+
+# Save the plot 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+pdf("03_output/SPN4_OMA1_LIN41_dotPlot_ALL.pdf", height = 5, width = 10)
+cluster.p1 <- dotplot(compareRBPclusters_ALL_simple,
+              title = "GO Enrichment (ALL Ontologies)")
+cluster.p1 + theme(
+  axis.text.y = element_text(size = 15),
+  axis.text.x = element_text(size = 15),
+  legend.text = element_text(size = 15)
+  )
+
+dev.off()
+```
+## SPN-4 on its own
+
+I wanted to analyze the SPN-4 set of associated mRNAs in isolation away from the other RBPs. 
+
+```{r spn4ONlY, echo = TRUE, warning = FALSE, message = FALSE}
+
+
+ego_SPN4 <- enrichGO(gene = RBP_list_of_vectors$SPN4,
+                universe = names(Present_list2),
+                keyType ="WORMBASE", 
+                OrgDb = org.Ce.eg.db,
+                ont = "BP",
+                pAdjustMethod = "BH",
+                readable = TRUE)
+
+ego_SPN4_simple <- simplify(ego_SPN4,
+          cutoff = 0.55,
+          by = "p.adjust",
+          select_fun = min,
+          measure = "Wang",
+          semData = NULL)
+
+# Print
+dotplot(ego_SPN4_simple)
+
+```
+
+## Save the plot
+
+Print SPN-4 only plot to a file 
+
+```{r printSPN4only, echo=FALSE, warning = FALSE, message = FALSE}
+
+# Save the plot 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+pdf("03_output/SPN4_only_BP.pdf", height = 5, width = 10)
+cluster.p1 <- dotplot(ego_SPN4_simple,
+              title = "GO Enrichment (Biological Processes)")
+cluster.p1 + theme(
+  axis.text.y = element_text(size = 15),
+  axis.text.x = element_text(size = 15),
+  legend.text = element_text(size = 15)
+  )
+
+dev.off()
+```
+
+## Session Info 
+
+
+```{r sessionInfo, echo = TRUE}
+
+sessionInfo()
+
+```
+
