@@ -9,6 +9,8 @@ output: github_document
 
 I want to detemrine which GO Ontology categories are enriched in the set of SPN-4 associated mRNAs and other categories of mRNAs. We have SPN-4, LIN-41, and OMA-1 associated mRNA categories. What GO ontology categories are over-represented in these?
 
+Note - what is the best background data? I tried a few different "universe" or background datasets. I tried all present genes and compared that to all Worm Base genes (default for Cluster Profiler). In the end, we chose the Worm Base geneset as a "universe" as this best addressed the question of what gene categories are enriched in the SPN-4, OMA-1, and LIN-41 associated mRNAs compared to all annotated genes. Using the set of present genes as "universe" did exclude some shared categories and better highlighted what differentiated SPN-4 associated genes from OMA-1 or LIN-41 genes. Ultimately, we decided this wasn't what we wanted to focus on. 
+
 ## Load modules
 
 Load the following modules: 
@@ -79,7 +81,8 @@ RBP_list_of_vectors <- list(SPN4 = SPN4_list2, OMA1 = OMA1_list2, LIN41 = LIN41_
 ```{r compare, echo=TRUE}
 
 # Compare the clusters 
-compareRBPclusters_BP <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "BP", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_BP <- compareCluster(geneCluster = RBP_list_of_vectors, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "BP", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+#universe =  Present_list2,
 compareRBPclusters_BP <- setReadable(compareRBPclusters_BP, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
 
 ## S4 method for signature 'enrichResult'
@@ -94,8 +97,9 @@ compareRBPclusters_BP
 compareRBPclusters_BP_simple
 
 # Plot the clusters
+dotplot(compareRBPclusters_BP)
 dotplot(compareRBPclusters_BP_simple)
-
+help(dotplot)
 
 
 ```
@@ -157,9 +161,9 @@ compareRBPclusters_BP_simple@compareClusterResult$geneID[5]
 compareRBPclusters_BP_simple@compareClusterResult$Count[5]
 
 # Lists of genes - set 17
-compareRBPclusters_BP_simple@compareClusterResult$Description[17]
-compareRBPclusters_BP_simple@compareClusterResult$geneID[17]
-compareRBPclusters_BP_simple@compareClusterResult$Count[17]
+compareRBPclusters_BP_simple@compareClusterResult$Description[12]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[12]
+compareRBPclusters_BP_simple@compareClusterResult$Count[12]
 ```
 
 ## Save the datasets 
@@ -182,7 +186,8 @@ write.csv(compareRBPclusters_BP_simple@compareClusterResult, file = "03_output/S
 ```{r compareMF, echo=FALSE, warning = FALSE, message = FALSE}
 
 # Compare the clusters 
-compareRBPclusters_MF <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "MF", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_MF <- compareCluster(geneCluster = RBP_list_of_vectors, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "MF", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+#universe =  Present_list2, 
 compareRBPclusters_MF <- setReadable(compareRBPclusters_MF, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
 
 ## S4 method for signature 'enrichResult'
@@ -197,6 +202,7 @@ compareRBPclusters_MF_simple <- simplify(compareRBPclusters_MF,
 #compareRBPclusters_MF_simple
 
 # Plot the clusters
+dotplot(compareRBPclusters_MF)
 dotplot(compareRBPclusters_MF_simple)
 ```
 
@@ -231,7 +237,8 @@ dev.off()
 
 # Compare the clusters 
 
-compareRBPclusters_CC <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "CC", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_CC <- compareCluster(geneCluster = RBP_list_of_vectors, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "CC", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+# universe =  Present_list2
 compareRBPclusters_CC <- setReadable(compareRBPclusters_CC, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
 
 ## S4 method for signature 'enrichResult'
@@ -281,7 +288,8 @@ All category ontologies
 
 # Compare the clusters 
 
-compareRBPclusters_ALL <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "ALL", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_ALL <- compareCluster(geneCluster = RBP_list_of_vectors, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "ALL", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+# universe =  Present_list2
 compareRBPclusters_ALL <- setReadable(compareRBPclusters_ALL, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
 
 ## S4 method for signature 'enrichResult'

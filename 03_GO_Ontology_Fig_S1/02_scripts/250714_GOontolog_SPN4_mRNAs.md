@@ -10,6 +10,17 @@ of SPN-4 associated mRNAs and other categories of mRNAs. We have SPN-4,
 LIN-41, and OMA-1 associated mRNA categories. What GO ontology
 categories are over-represented in these?
 
+Note - what is the best background data? I tried a few different
+“universe” or background datasets. I tried all present genes and
+compared that to all Worm Base genes (default for Cluster Profiler). In
+the end, we chose the Worm Base geneset as a “universe” as this best
+addressed the question of what gene categories are enriched in the
+SPN-4, OMA-1, and LIN-41 associated mRNAs compared to all annotated
+genes. Using the set of present genes as “universe” did exclude some
+shared categories and better highlighted what differentiated SPN-4
+associated genes from OMA-1 or LIN-41 genes. Ultimately, we decided this
+wasn’t what we wanted to focus on.
+
 ## Load modules
 
 Load the following modules:
@@ -79,7 +90,8 @@ RBP_list_of_vectors <- list(SPN4 = SPN4_list2, OMA1 = OMA1_list2, LIN41 = LIN41_
 
 ``` r
 # Compare the clusters 
-compareRBPclusters_BP <- compareCluster(geneCluster = RBP_list_of_vectors, universe =  Present_list2, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "BP", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+compareRBPclusters_BP <- compareCluster(geneCluster = RBP_list_of_vectors, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "BP", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+#universe =  Present_list2,
 compareRBPclusters_BP <- setReadable(compareRBPclusters_BP, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
 
 ## S4 method for signature 'enrichResult'
@@ -101,21 +113,21 @@ compareRBPclusters_BP
     ##  $ SPN4 : chr [1:728] "WBGene00235348" "WBGene00235346" "WBGene00219908" "WBGene00219803" ...
     ##  $ OMA1 : chr [1:1350] "WBGene00269427" "WBGene00255736" "WBGene00249815" "WBGene00235351" ...
     ##  $ LIN41: chr [1:900] "WBGene00270322" "WBGene00255594" "WBGene00235356" "WBGene00235128" ...
-    ## #...Result   'data.frame':   197 obs. of  10 variables:
+    ## #...Result   'data.frame':   321 obs. of  10 variables:
     ##  $ Cluster    : Factor w/ 3 levels "SPN4","OMA1",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ ID         : chr  "GO:0030703" "GO:0007276" "GO:0048609" "GO:0048477" ...
-    ##  $ Description: chr  "eggshell formation" "gamete generation" "multicellular organismal reproductive process" "oogenesis" ...
-    ##  $ GeneRatio  : chr  "13/516" "48/516" "50/516" "31/516" ...
-    ##  $ BgRatio    : chr  "16/8234" "269/8234" "289/8234" "130/8234" ...
-    ##  $ pvalue     : num  9.36e-14 2.21e-11 2.67e-11 5.21e-11 6.40e-11 ...
-    ##  $ p.adjust   : num  1.58e-10 1.51e-08 1.51e-08 1.81e-08 1.81e-08 ...
-    ##  $ qvalue     : num  1.28e-10 1.22e-08 1.22e-08 1.46e-08 1.46e-08 ...
-    ##  $ geneID     : chr  "cyp-31A3/egg-4/egg-5/egg-2/cpg-2/egg-1/cyp-31A2/cbd-1/egg-3/rab-11.1/emb-8/chs-1/cpg-1" "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba-1/tra"| __truncated__ "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba"| __truncated__ "cyp-31A3/egg-4/egg-5/egg-2/cpg-2/egg-1/cyp-31A2/cbd-1/egg-3/elli-1/uba-1/rme-2/rab-11.1/rab-7/puf-7/puf-6/puf-5"| __truncated__ ...
-    ##  $ Count      : int  13 48 50 31 67 65 67 37 41 33 ...
+    ##  $ ID         : chr  "GO:0030703" "GO:0019953" "GO:0032504" "GO:0007276" ...
+    ##  $ Description: chr  "eggshell formation" "sexual reproduction" "multicellular organism reproduction" "gamete generation" ...
+    ##  $ GeneRatio  : chr  "13/516" "65/516" "67/516" "48/516" ...
+    ##  $ BgRatio    : chr  "17/9723" "459/9723" "485/9723" "279/9723" ...
+    ##  $ pvalue     : num  4.48e-14 1.63e-13 2.21e-13 2.39e-13 2.44e-13 ...
+    ##  $ p.adjust   : num  7.45e-11 7.45e-11 7.45e-11 7.45e-11 7.45e-11 ...
+    ##  $ qvalue     : num  5.7e-11 5.7e-11 5.7e-11 5.7e-11 5.7e-11 ...
+    ##  $ geneID     : chr  "cyp-31A3/egg-4/egg-5/egg-2/cpg-2/egg-1/cyp-31A2/cbd-1/egg-3/rab-11.1/emb-8/chs-1/cpg-1" "zipt-7.1/cosa-1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/cdk-2/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/pzf-1/cyp-31A2/cbd"| __truncated__ "zipt-7.1/cutc-1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/ubxn-3/atg-18/kca-1/cpg-2/egg-1/eipr-1/gck-3/cyp-31A2/cbd-1/eg"| __truncated__ "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba-1/tra"| __truncated__ ...
+    ##  $ Count      : int  13 65 67 48 67 50 31 37 41 33 ...
     ## #.. number of enriched terms found for each gene cluster:
-    ## #..   SPN4: 130 
-    ## #..   OMA1: 17 
-    ## #..   LIN41: 50 
+    ## #..   SPN4: 181 
+    ## #..   OMA1: 45 
+    ## #..   LIN41: 95 
     ## #
     ## #...Citation
     ## T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, 
@@ -135,21 +147,21 @@ compareRBPclusters_BP_simple
     ##  $ SPN4 : chr [1:728] "WBGene00235348" "WBGene00235346" "WBGene00219908" "WBGene00219803" ...
     ##  $ OMA1 : chr [1:1350] "WBGene00269427" "WBGene00255736" "WBGene00249815" "WBGene00235351" ...
     ##  $ LIN41: chr [1:900] "WBGene00270322" "WBGene00255594" "WBGene00235356" "WBGene00235128" ...
-    ## #...Result   'data.frame':   64 obs. of  10 variables:
+    ## #...Result   'data.frame':   83 obs. of  10 variables:
     ##  $ Cluster    : Factor w/ 3 levels "SPN4","OMA1",..: 1 1 1 1 1 1 1 1 1 1 ...
-    ##  $ ID         : chr  "GO:0030703" "GO:0048609" "GO:0016192" "GO:1990778" ...
-    ##  $ Description: chr  "eggshell formation" "multicellular organismal reproductive process" "vesicle-mediated transport" "protein localization to cell periphery" ...
-    ##  $ GeneRatio  : chr  "13/516" "50/516" "67/516" "19/516" ...
-    ##  $ BgRatio    : chr  "16/8234" "289/8234" "472/8234" "64/8234" ...
-    ##  $ pvalue     : num  9.36e-14 2.67e-11 1.03e-10 6.20e-09 3.90e-08 ...
-    ##  $ p.adjust   : num  1.58e-10 1.51e-08 2.21e-08 9.53e-07 4.40e-06 ...
-    ##  $ qvalue     : num  1.28e-10 1.22e-08 1.79e-08 7.70e-07 3.56e-06 ...
-    ##  $ geneID     : chr  "cyp-31A3/egg-4/egg-5/egg-2/cpg-2/egg-1/cyp-31A2/cbd-1/egg-3/rab-11.1/emb-8/chs-1/cpg-1" "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba"| __truncated__ "vps-20/Y54E10BR.2/copb-1/vps-24/eat-17/syx-18/ddl-1/F41H10.4/atg-18/F07F6.4/copd-1/tsg-101/mppe-1/vps-51/vps-15"| __truncated__ "pigw-1/Y54E10BR.2/egg-4/egg-5/egg-2/cdk-2/cgt-3/F41H10.4/efr-3/egg-1/cbd-1/egg-3/vps-35/unc-11/rme-1/rab-6.2/nsf-1/ncl-1/chs-1" ...
-    ##  $ Count      : int  13 50 67 19 12 53 42 9 9 30 ...
+    ##  $ ID         : chr  "GO:0030703" "GO:0019953" "GO:0032504" "GO:0007276" ...
+    ##  $ Description: chr  "eggshell formation" "sexual reproduction" "multicellular organism reproduction" "gamete generation" ...
+    ##  $ GeneRatio  : chr  "13/516" "65/516" "67/516" "48/516" ...
+    ##  $ BgRatio    : chr  "17/9723" "459/9723" "485/9723" "279/9723" ...
+    ##  $ pvalue     : num  4.48e-14 1.63e-13 2.21e-13 2.39e-13 2.44e-13 ...
+    ##  $ p.adjust   : num  7.45e-11 7.45e-11 7.45e-11 7.45e-11 7.45e-11 ...
+    ##  $ qvalue     : num  5.7e-11 5.7e-11 5.7e-11 5.7e-11 5.7e-11 ...
+    ##  $ geneID     : chr  "cyp-31A3/egg-4/egg-5/egg-2/cpg-2/egg-1/cyp-31A2/cbd-1/egg-3/rab-11.1/emb-8/chs-1/cpg-1" "zipt-7.1/cosa-1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/cdk-2/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/pzf-1/cyp-31A2/cbd"| __truncated__ "zipt-7.1/cutc-1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/ubxn-3/atg-18/kca-1/cpg-2/egg-1/eipr-1/gck-3/cyp-31A2/cbd-1/eg"| __truncated__ "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba-1/tra"| __truncated__ ...
+    ##  $ Count      : int  13 65 67 48 67 50 19 42 12 9 ...
     ## #.. number of enriched terms found for each gene cluster:
-    ## #..   SPN4: 33 
-    ## #..   OMA1: 11 
-    ## #..   LIN41: 20 
+    ## #..   SPN4: 45 
+    ## #..   OMA1: 15 
+    ## #..   LIN41: 23 
     ## #
     ## #...Citation
     ## T Wu, E Hu, S Xu, M Chen, P Guo, Z Dai, T Feng, L Zhou, 
@@ -159,10 +171,31 @@ compareRBPclusters_BP_simple
 
 ``` r
 # Plot the clusters
-dotplot(compareRBPclusters_BP_simple)
+dotplot(compareRBPclusters_BP)
 ```
 
 ![](250714_GOontolog_SPN4_mRNAs_files/figure-gfm/compare-1.png)<!-- -->
+
+``` r
+dotplot(compareRBPclusters_BP_simple)
+```
+
+![](250714_GOontolog_SPN4_mRNAs_files/figure-gfm/compare-2.png)<!-- -->
+
+``` r
+help(dotplot)
+```
+
+    ## Help on topic 'dotplot' was found in the following packages:
+    ## 
+    ##   Package               Library
+    ##   enrichplot            /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/library
+    ##   graphics              /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/library
+    ##   lattice               /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/library
+    ##   clusterProfiler       /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/library
+    ## 
+    ## 
+    ## Using the first match ...
 
 ### Save the plot
 
@@ -195,69 +228,88 @@ Determine the genes that are in each GO ontology category
 Use these gene names in the Supplemental Figure
 
     ##  [1] "eggshell formation"                                                     
-    ##  [2] "multicellular organismal reproductive process"                          
-    ##  [3] "vesicle-mediated transport"                                             
-    ##  [4] "protein localization to cell periphery"                                 
-    ##  [5] "carbohydrate biosynthetic process"                                      
-    ##  [6] "carbohydrate derivative metabolic process"                              
-    ##  [7] "embryo development ending in birth or egg hatching"                     
-    ##  [8] "glycogen metabolic process"                                             
-    ##  [9] "energy reserve metabolic process"                                       
-    ## [10] "response to topologically incorrect protein"                            
-    ## [11] "epithelium development"                                                 
-    ## [12] "localization within membrane"                                           
-    ## [13] "response to endoplasmic reticulum stress"                               
-    ## [14] "ubiquitin-dependent protein catabolic process"                          
-    ## [15] "intracellular pH reduction"                                             
-    ## [16] "cytoskeleton-dependent cytokinesis"                                     
-    ## [17] "cell cycle process"                                                     
-    ## [18] "organophosphate metabolic process"                                      
-    ## [19] "glycolipid biosynthetic process"                                        
-    ## [20] "carbohydrate derivative transport"                                      
+    ##  [2] "sexual reproduction"                                                    
+    ##  [3] "multicellular organism reproduction"                                    
+    ##  [4] "gamete generation"                                                      
+    ##  [5] "vesicle-mediated transport"                                             
+    ##  [6] "multicellular organismal reproductive process"                          
+    ##  [7] "protein localization to cell periphery"                                 
+    ##  [8] "embryo development ending in birth or egg hatching"                     
+    ##  [9] "carbohydrate biosynthetic process"                                      
+    ## [10] "glycogen metabolic process"                                             
+    ## [11] "energy reserve metabolic process"                                       
+    ## [12] "cell cycle process"                                                     
+    ## [13] "localization within membrane"                                           
+    ## [14] "carbohydrate derivative metabolic process"                              
+    ## [15] "response to topologically incorrect protein"                            
+    ## [16] "epithelium development"                                                 
+    ## [17] "ubiquitin-dependent protein catabolic process"                          
+    ## [18] "response to endoplasmic reticulum stress"                               
+    ## [19] "intracellular pH reduction"                                             
+    ## [20] "organophosphate metabolic process"                                      
     ## [21] "protein transport"                                                      
-    ## [22] "regulation of cell cycle"                                               
-    ## [23] "negative regulation of translation"                                     
-    ## [24] "negative regulation of amide metabolic process"                         
+    ## [22] "glycolipid biosynthetic process"                                        
+    ## [23] "larval development"                                                     
+    ## [24] "regulation of cellular component organization"                          
     ## [25] "post-translational protein modification"                                
-    ## [26] "nuclear membrane organization"                                          
-    ## [27] "regulation of protein metabolic process"                                
-    ## [28] "small GTPase mediated signal transduction"                              
-    ## [29] "cell migration"                                                         
-    ## [30] "regulation of cellular component organization"                          
-    ## [31] "glycosylation"                                                          
-    ## [32] "import into cell"                                                       
-    ## [33] "receptor localization to synapse"                                       
-    ## [34] "animal organ development"                                               
-    ## [35] "RNA splicing"                                                           
-    ## [36] "cell fate commitment"                                                   
-    ## [37] "tissue development"                                                     
-    ## [38] "glycerophospholipid biosynthetic process"                               
-    ## [39] "positive regulation of biosynthetic process"                            
-    ## [40] "positive regulation of cellular biosynthetic process"                   
-    ## [41] "positive regulation of macromolecule biosynthetic process"              
-    ## [42] "protein glycosylation"                                                  
-    ## [43] "glycosylation"                                                          
-    ## [44] "sex differentiation"                                                    
-    ## [45] "cell cycle process"                                                     
-    ## [46] "positive regulation of nitrogen compound metabolic process"             
-    ## [47] "negative regulation of nucleobase-containing compound metabolic process"
-    ## [48] "sexual reproduction"                                                    
-    ## [49] "negative regulation of cellular biosynthetic process"                   
-    ## [50] "negative regulation of macromolecule biosynthetic process"              
-    ## [51] "negative regulation of biosynthetic process"                            
-    ## [52] "regulation of cell cycle"                                               
-    ## [53] "peptidyl-cysteine modification"                                         
-    ## [54] "cell division"                                                          
-    ## [55] "developmental process involved in reproduction"                         
-    ## [56] "regulation of transferase activity"                                     
-    ## [57] "protein glycosylation"                                                  
-    ## [58] "regulation of translation"                                              
-    ## [59] "positive regulation of oocyte development"                              
-    ## [60] "macromolecule glycosylation"                                            
-    ## [61] "regulation of amide metabolic process"                                  
-    ## [62] "RNA splicing"                                                           
-    ## [63] "double-strand break repair via homologous recombination"                
-    ## [64] "recombinational repair"
+    ## [26] "regulation of protein metabolic process"                                
+    ## [27] "negative regulation of translation"                                     
+    ## [28] "cell migration"                                                         
+    ## [29] "negative regulation of amide metabolic process"                         
+    ## [30] "negative regulation of macromolecule biosynthetic process"              
+    ## [31] "carbohydrate derivative transport"                                      
+    ## [32] "membrane organization"                                                  
+    ## [33] "small GTPase mediated signal transduction"                              
+    ## [34] "import into cell"                                                       
+    ## [35] "receptor localization to synapse"                                       
+    ## [36] "regulation of microtubule-based process"                                
+    ## [37] "post-transcriptional regulation of gene expression"                     
+    ## [38] "nucleobase-containing small molecule metabolic process"                 
+    ## [39] "regulation of programmed cell death"                                    
+    ## [40] "establishment of vesicle localization"                                  
+    ## [41] "protein folding"                                                        
+    ## [42] "protein maturation"                                                     
+    ## [43] "regulation of protein phosphorylation"                                  
+    ## [44] "maintenance of protein location"                                        
+    ## [45] "regulation of synapse structure or activity"                            
+    ## [46] "animal organ development"                                               
+    ## [47] "RNA splicing"                                                           
+    ## [48] "tissue development"                                                     
+    ## [49] "cell fate commitment"                                                   
+    ## [50] "positive regulation of biosynthetic process"                            
+    ## [51] "positive regulation of cellular biosynthetic process"                   
+    ## [52] "positive regulation of DNA-templated transcription"                     
+    ## [53] "positive regulation of RNA biosynthetic process"                        
+    ## [54] "sex differentiation"                                                    
+    ## [55] "glycerophospholipid biosynthetic process"                               
+    ## [56] "protein N-linked glycosylation"                                         
+    ## [57] "positive regulation of developmental process"                           
+    ## [58] "regulation of cell differentiation"                                     
+    ## [59] "negative regulation of nitrogen compound metabolic process"             
+    ## [60] "regulation of vulval development"                                       
+    ## [61] "cell cycle process"                                                     
+    ## [62] "regulation of protein metabolic process"                                
+    ## [63] "negative regulation of nitrogen compound metabolic process"             
+    ## [64] "sexual reproduction"                                                    
+    ## [65] "negative regulation of nucleobase-containing compound metabolic process"
+    ## [66] "negative regulation of cellular biosynthetic process"                   
+    ## [67] "cell division"                                                          
+    ## [68] "developmental process involved in reproduction"                         
+    ## [69] "regulation of transferase activity"                                     
+    ## [70] "RNA splicing"                                                           
+    ## [71] "regulation of translation"                                              
+    ## [72] "peptidyl-cysteine modification"                                         
+    ## [73] "regulation of amide metabolic process"                                  
+    ## [74] "nuclear division"                                                       
+    ## [75] "positive regulation of oocyte development"                              
+    ## [76] "post-transcriptional regulation of gene expression"                     
+    ## [77] "cell maturation"                                                        
+    ## [78] "phosphatidylinositol metabolic process"                                 
+    ## [79] "organic anion transport"                                                
+    ## [80] "mannosylation"                                                          
+    ## [81] "regulation of proteasomal protein catabolic process"                    
+    ## [82] "embryonic pattern specification"                                        
+    ## [83] "positive regulation of developmental process"
 
     ## [1] "eggshell formation"
 
@@ -265,29 +317,29 @@ Use these gene names in the Supplemental Figure
 
     ## [1] 13
 
-    ## [1] "multicellular organismal reproductive process"
+    ## [1] "sexual reproduction"
 
-    ## [1] "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba-1/tra-1/sqv-8/spe-5/sos-1/rme-2/rab-11.1/rab-7/puf-7/puf-6/puf-5/plp-1/oma-2/oma-1/nos-2/nos-1/nhr-23/mpk-1/lip-1/lin-41/let-60/hpl-1/gsk-3/glh-2/fog-1/emb-8/cyd-1/cpb-1/chs-1/cgh-1/cpg-1/atx-2/apx-1/aph-1"
+    ## [1] "zipt-7.1/cosa-1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/cdk-2/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/pzf-1/cyp-31A2/cbd-1/egg-3/elli-1/zhp-2/uba-1/tra-1/syp-3/syp-2/sqv-8/spo-11/spe-5/sos-1/rme-2/rad-54.L/rab-11.1/rab-7/rab-6.1/puf-7/puf-6/puf-5/plp-1/pkc-3/oma-2/oma-1/nos-2/nos-1/nhr-23/mpk-1/mog-2/lip-1/lin-41/let-60/ima-2/hpl-1/gsk-3/glh-2/fog-1/emb-30/emb-8/cpb-1/cmd-1/chs-1/cgh-1/cep-1/cpg-1/atx-2/apx-1/aph-1/apc-10"
 
-    ## [1] 50
+    ## [1] 65
+
+    ## [1] "multicellular organism reproduction"
+
+    ## [1] "zipt-7.1/cutc-1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/ubxn-3/atg-18/kca-1/cpg-2/egg-1/eipr-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/scpl-1/unc-16/uba-1/tra-1/sqv-8/sqv-7/sqv-5/sqv-4/sqv-3/sqv-2/sqv-1/spe-5/sos-1/sek-1/rme-2/rab-11.1/rab-7/puf-7/puf-6/puf-5/plp-1/oma-2/oma-1/nos-2/nos-1/nhr-23/mpk-1/lip-1/lin-59/lin-41/let-60/hpl-1/hlh-3/gsk-3/glh-2/fox-1/fog-1/emb-8/daf-31/dab-1/cyd-1/cpb-1/chs-1/cgh-1/cpg-1/ced-3/atx-2/apx-1/aph-1"
+
+    ## [1] 67
+
+    ## [1] "gamete generation"
+
+    ## [1] "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba-1/tra-1/sqv-8/spe-5/sos-1/rme-2/rab-11.1/rab-7/puf-7/puf-6/puf-5/plp-1/oma-2/oma-1/nos-2/nos-1/nhr-23/mpk-1/lip-1/lin-41/let-60/hpl-1/gsk-3/glh-2/fog-1/emb-8/cpb-1/chs-1/cgh-1/cpg-1/atx-2/apx-1/aph-1"
+
+    ## [1] 48
 
     ## [1] "vesicle-mediated transport"
 
     ## [1] "vps-20/Y54E10BR.2/copb-1/vps-24/eat-17/syx-18/ddl-1/F41H10.4/atg-18/F07F6.4/copd-1/tsg-101/mppe-1/vps-51/vps-15/csnk-1/snx-6/rga-1/golg-5/chc-1/T19A6.1/R186.3/M01F1.9/strl-1/rer-1/cope-1/piki-1/ndk-1/vps-36/F11A10.6/ctns-1/C31E10.6/C31E10.5/vps-52/vps-54/vps-35/unc-108/unc-16/unc-11/tfg-1/vps-16/snx-3/itsn-1/snt-2/rme-2/rme-1/rab-14/rab-11.1/rab-7/rab-6.2/rab-6.1/rab-5/ptr-2/pkc-1/num-1/nsf-1/mig-2/lst-4/ile-1/gsk-3/epn-1/dyn-1/dab-1/cogc-2/cmd-1/ced-6/arl-8"
 
     ## [1] 67
-
-    ## [1] "protein localization to cell periphery"
-
-    ## [1] "pigw-1/Y54E10BR.2/egg-4/egg-5/egg-2/cdk-2/cgt-3/F41H10.4/efr-3/egg-1/cbd-1/egg-3/vps-35/unc-11/rme-1/rab-6.2/nsf-1/ncl-1/chs-1"
-
-    ## [1] 19
-
-    ## [1] "carbohydrate biosynthetic process"
-
-    ## [1] "Y50D7A.3/H18N23.2/CC8.2/T04A8.7/agl-1/rml-1/sqv-7/pyc-1/gsy-1/gob-1/fbp-1/bre-3"
-
-    ## [1] 12
 
     ## [1] "cell cycle process"
 
@@ -312,7 +364,7 @@ write.csv(compareRBPclusters_BP_simple@compareClusterResult, file = "03_output/S
 
 ### Compare the clusters
 
-![](250714_GOontolog_SPN4_mRNAs_files/figure-gfm/compareMF-1.png)<!-- -->
+![](250714_GOontolog_SPN4_mRNAs_files/figure-gfm/compareMF-1.png)<!-- -->![](250714_GOontolog_SPN4_mRNAs_files/figure-gfm/compareMF-2.png)<!-- -->
 
 ### Save the plot
 
