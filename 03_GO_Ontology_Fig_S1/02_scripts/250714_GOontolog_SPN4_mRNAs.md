@@ -154,7 +154,7 @@ Figure.
 # Save the plot 
 setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
 
-pdf("03_output/SPN4_OMA1_LIN41_dotPlot_BP.pdf", height = 15, width = 8)
+pdf("03_output/SPN4_OMA1_LIN41_dotPlot_BP.pdf", height = 10, width = 10)
 cluster.p1 <- dotplot(compareRBPclusters_BP_simple, 
               title = "GO Enrichment (Biological Process)")
 cluster.p1 + theme(
