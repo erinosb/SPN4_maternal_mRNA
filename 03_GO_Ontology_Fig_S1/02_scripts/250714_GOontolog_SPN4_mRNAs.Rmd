@@ -18,7 +18,7 @@ Load the following modules:
   - ggplot2
 
 
-```{r echo=FALSE, warning = FALSE, message = FALSE}
+```{r echo=TRUE, warning = FALSE, message = FALSE}
 
 # Optional installation for cluster profiler:
 #if (!require("BiocManager", quietly = TRUE))
@@ -37,12 +37,11 @@ library(ggplot2)
 
 Select org.Ce.eg.db from 
 
-```{r load_elegans, echo=FALSE, warning = FALSE, message = FALSE}
+```{r load_elegans, echo=TRUE, warning = FALSE, message = FALSE}
 
 # BiocManager::install("org.Ce.eg.db")
 library(org.Ce.eg.db)
 organism = "org.Ce.eg.db"
-
 
 ```
 
@@ -121,32 +120,58 @@ cluster.p1 + theme(
 
 dev.off()
 ```
-### Save the datasets 
+## Identify key genes 
 
-Use this in a Supplemental Datasets
+Determine the genes that are in each GO ontology category
 
-Also use this to annotate the Supplemental Figure with individual gene names
+Use these gene names in the Supplemental Figure
 
 ```{r BPdata, echo = FALSE, message = FALSE}
 
+# Total lists of genes
 compareRBPclusters_BP_simple@compareClusterResult$Description
 
+# Lists of genes - set 1
 compareRBPclusters_BP_simple@compareClusterResult$Description[1]
 compareRBPclusters_BP_simple@compareClusterResult$geneID[1]
+compareRBPclusters_BP_simple@compareClusterResult$Count[1]
 
+# Lists of genes - set 2
 compareRBPclusters_BP_simple@compareClusterResult$Description[2]
 compareRBPclusters_BP_simple@compareClusterResult$geneID[2]
+compareRBPclusters_BP_simple@compareClusterResult$Count[2]
 
+# Lists of genes - set 3
 compareRBPclusters_BP_simple@compareClusterResult$Description[3]
 compareRBPclusters_BP_simple@compareClusterResult$geneID[3]
+compareRBPclusters_BP_simple@compareClusterResult$Count[3]
 
-compareRBPclusters_BP_simple@compareClusterResult$Description[30]
-compareRBPclusters_BP_simple@compareClusterResult$geneID[30]
+# Lists of genes - set 4
+compareRBPclusters_BP_simple@compareClusterResult$Description[4]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[4]
+compareRBPclusters_BP_simple@compareClusterResult$Count[4]
 
-compareRBPclusters_BP_simple@compareClusterResult$Description
+# Lists of genes - set 5
+compareRBPclusters_BP_simple@compareClusterResult$Description[5]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[5]
+compareRBPclusters_BP_simple@compareClusterResult$Count[5]
 
-compareRBPclusters_BP_simple@compareClusterResult$Description[6]
-compareRBPclusters_BP_simple@compareClusterResult$geneID[6]
+# Lists of genes - set 17
+compareRBPclusters_BP_simple@compareClusterResult$Description[17]
+compareRBPclusters_BP_simple@compareClusterResult$geneID[17]
+compareRBPclusters_BP_simple@compareClusterResult$Count[17]
+```
+
+## Save the datasets 
+
+Save the datasets so that readers can have access to the sets of genes within each category. 
+
+```{r Dataset, echo = TRUE}
+# output the list 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+write.csv(compareRBPclusters_BP_simple@compareClusterResult, file = "03_output/SPN4_assocRNAs_GO_Ontology.csv",
+          quote = FALSE)
 
 ```
 
@@ -223,11 +248,12 @@ compareRBPclusters_CC_simple <- simplify( compareRBPclusters_CC,
 # Plot the clusters
 dotplot(compareRBPclusters_CC_simple)
 ```
+
 ### Save the plot
 
 Print Cellular Components to a file
 
-```{r printCC, echo=FALSE, warning = FALSE, message = FALSE}
+```{r printCC, echo=TRUE, warning = FALSE, message = FALSE}
 
 # Save the plot 
 setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
@@ -274,7 +300,7 @@ dotplot(compareRBPclusters_ALL_simple)
 ```
 ### Save the plot
 
-Print Molecular Function plot to a file
+Print All categories plot to a file
 
 ```{r printALL, echo=TRUE, warning = FALSE, message = FALSE}
 

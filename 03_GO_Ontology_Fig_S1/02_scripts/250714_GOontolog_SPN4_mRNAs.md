@@ -18,9 +18,28 @@ Load the following modules:
 - enrichplot
 - ggplot2
 
+``` r
+# Optional installation for cluster profiler:
+#if (!require("BiocManager", quietly = TRUE))
+#    install.packages("BiocManager")
+
+#BiocManager::install("clusterProfiler")
+
+# Load libraries:
+library(clusterProfiler)
+library(enrichplot)
+library(ggplot2)
+```
+
 ## Initiate Cluster Profiler
 
 Select org.Ce.eg.db from
+
+``` r
+# BiocManager::install("org.Ce.eg.db")
+library(org.Ce.eg.db)
+organism = "org.Ce.eg.db"
+```
 
 ## Import datasets
 
@@ -169,12 +188,11 @@ dev.off()
     ## quartz_off_screen 
     ##                 2
 
-### Save the datasets
+## Identify key genes
 
-Use this in a Supplemental Datasets
+Determine the genes that are in each GO ontology category
 
-Also use this to annotate the Supplemental Figure with individual gene
-names
+Use these gene names in the Supplemental Figure
 
     ##  [1] "eggshell formation"                                                     
     ##  [2] "multicellular organismal reproductive process"                          
@@ -245,86 +263,50 @@ names
 
     ## [1] "cyp-31A3/egg-4/egg-5/egg-2/cpg-2/egg-1/cyp-31A2/cbd-1/egg-3/rab-11.1/emb-8/chs-1/cpg-1"
 
+    ## [1] 13
+
     ## [1] "multicellular organismal reproductive process"
 
     ## [1] "zipt-7.1/cyp-31A3/egg-4/egg-5/egg-2/rmh-1/ubxn-3/atg-18/kca-1/cpg-2/egg-1/gck-3/cyp-31A2/cbd-1/egg-3/elli-1/uba-1/tra-1/sqv-8/spe-5/sos-1/rme-2/rab-11.1/rab-7/puf-7/puf-6/puf-5/plp-1/oma-2/oma-1/nos-2/nos-1/nhr-23/mpk-1/lip-1/lin-41/let-60/hpl-1/gsk-3/glh-2/fog-1/emb-8/cyd-1/cpb-1/chs-1/cgh-1/cpg-1/atx-2/apx-1/aph-1"
+
+    ## [1] 50
 
     ## [1] "vesicle-mediated transport"
 
     ## [1] "vps-20/Y54E10BR.2/copb-1/vps-24/eat-17/syx-18/ddl-1/F41H10.4/atg-18/F07F6.4/copd-1/tsg-101/mppe-1/vps-51/vps-15/csnk-1/snx-6/rga-1/golg-5/chc-1/T19A6.1/R186.3/M01F1.9/strl-1/rer-1/cope-1/piki-1/ndk-1/vps-36/F11A10.6/ctns-1/C31E10.6/C31E10.5/vps-52/vps-54/vps-35/unc-108/unc-16/unc-11/tfg-1/vps-16/snx-3/itsn-1/snt-2/rme-2/rme-1/rab-14/rab-11.1/rab-7/rab-6.2/rab-6.1/rab-5/ptr-2/pkc-1/num-1/nsf-1/mig-2/lst-4/ile-1/gsk-3/epn-1/dyn-1/dab-1/cogc-2/cmd-1/ced-6/arl-8"
 
-    ## [1] "regulation of cellular component organization"
+    ## [1] 67
 
-    ## [1] "szy-4/rga-8/rmh-1/F41H10.4/twf-2/epg-4/F25B4.7/spdl-1/csnk-1/rsks-1/ppm-2/chc-1/lpin-1/piki-1/ndk-1/maph-1.2/maph-1.3/vps-35/vha-12/unc-69/unc-60/unc-40/tfg-1/itsn-1/syp-2/sqv-3/rbg-1/rab-5/ppk-1/mig-2/lin-23/let-60/kpc-1/hlh-3/gsk-3/fsn-1/emb-30/efn-4/dsh-1/dab-1/ced-6/ced-4/ced-3/atx-2/arx-5"
+    ## [1] "protein localization to cell periphery"
 
-    ##  [1] "eggshell formation"                                                     
-    ##  [2] "multicellular organismal reproductive process"                          
-    ##  [3] "vesicle-mediated transport"                                             
-    ##  [4] "protein localization to cell periphery"                                 
-    ##  [5] "carbohydrate biosynthetic process"                                      
-    ##  [6] "carbohydrate derivative metabolic process"                              
-    ##  [7] "embryo development ending in birth or egg hatching"                     
-    ##  [8] "glycogen metabolic process"                                             
-    ##  [9] "energy reserve metabolic process"                                       
-    ## [10] "response to topologically incorrect protein"                            
-    ## [11] "epithelium development"                                                 
-    ## [12] "localization within membrane"                                           
-    ## [13] "response to endoplasmic reticulum stress"                               
-    ## [14] "ubiquitin-dependent protein catabolic process"                          
-    ## [15] "intracellular pH reduction"                                             
-    ## [16] "cytoskeleton-dependent cytokinesis"                                     
-    ## [17] "cell cycle process"                                                     
-    ## [18] "organophosphate metabolic process"                                      
-    ## [19] "glycolipid biosynthetic process"                                        
-    ## [20] "carbohydrate derivative transport"                                      
-    ## [21] "protein transport"                                                      
-    ## [22] "regulation of cell cycle"                                               
-    ## [23] "negative regulation of translation"                                     
-    ## [24] "negative regulation of amide metabolic process"                         
-    ## [25] "post-translational protein modification"                                
-    ## [26] "nuclear membrane organization"                                          
-    ## [27] "regulation of protein metabolic process"                                
-    ## [28] "small GTPase mediated signal transduction"                              
-    ## [29] "cell migration"                                                         
-    ## [30] "regulation of cellular component organization"                          
-    ## [31] "glycosylation"                                                          
-    ## [32] "import into cell"                                                       
-    ## [33] "receptor localization to synapse"                                       
-    ## [34] "animal organ development"                                               
-    ## [35] "RNA splicing"                                                           
-    ## [36] "cell fate commitment"                                                   
-    ## [37] "tissue development"                                                     
-    ## [38] "glycerophospholipid biosynthetic process"                               
-    ## [39] "positive regulation of biosynthetic process"                            
-    ## [40] "positive regulation of cellular biosynthetic process"                   
-    ## [41] "positive regulation of macromolecule biosynthetic process"              
-    ## [42] "protein glycosylation"                                                  
-    ## [43] "glycosylation"                                                          
-    ## [44] "sex differentiation"                                                    
-    ## [45] "cell cycle process"                                                     
-    ## [46] "positive regulation of nitrogen compound metabolic process"             
-    ## [47] "negative regulation of nucleobase-containing compound metabolic process"
-    ## [48] "sexual reproduction"                                                    
-    ## [49] "negative regulation of cellular biosynthetic process"                   
-    ## [50] "negative regulation of macromolecule biosynthetic process"              
-    ## [51] "negative regulation of biosynthetic process"                            
-    ## [52] "regulation of cell cycle"                                               
-    ## [53] "peptidyl-cysteine modification"                                         
-    ## [54] "cell division"                                                          
-    ## [55] "developmental process involved in reproduction"                         
-    ## [56] "regulation of transferase activity"                                     
-    ## [57] "protein glycosylation"                                                  
-    ## [58] "regulation of translation"                                              
-    ## [59] "positive regulation of oocyte development"                              
-    ## [60] "macromolecule glycosylation"                                            
-    ## [61] "regulation of amide metabolic process"                                  
-    ## [62] "RNA splicing"                                                           
-    ## [63] "double-strand break repair via homologous recombination"                
-    ## [64] "recombinational repair"
+    ## [1] "pigw-1/Y54E10BR.2/egg-4/egg-5/egg-2/cdk-2/cgt-3/F41H10.4/efr-3/egg-1/cbd-1/egg-3/vps-35/unc-11/rme-1/rab-6.2/nsf-1/ncl-1/chs-1"
 
-    ## [1] "carbohydrate derivative metabolic process"
+    ## [1] 19
 
-    ## [1] "fitm-2/upp-1/ZK177.8/pigw-1/guk-1/R12E2.11/pfkb-1.2/cgt-3/ldp-1/F09E5.3/acly-1/mppe-1/Y87G2A.2/pigl-1/vha-13/gly-9/Y43F4B.5/gpdh-3/pigc-1/rml-1/ndk-1/gfat-2/hxk-1/gfat-1/piga-1/mce-1/algn-9/pigm-1/acly-2/B0035.3/B0024.13/pgap-2/vha-12/sqv-8/sqv-7/sqv-5/sqv-4/sqv-3/sqv-2/sqv-1/spe-5/pps-1/gob-1/gly-13/gly-10/gly-7/gly-5/gly-3/fbp-1/dlg-1/dad-1/chs-1/bre-3"
+    ## [1] "carbohydrate biosynthetic process"
+
+    ## [1] "Y50D7A.3/H18N23.2/CC8.2/T04A8.7/agl-1/rml-1/sqv-7/pyc-1/gsy-1/gob-1/fbp-1/bre-3"
+
+    ## [1] 12
+
+    ## [1] "cell cycle process"
+
+    ## [1] "szy-4/cosa-1/cyp-31A3/egg-4/T12C9.7/egg-5/rmh-1/cdk-2/cec-4/kca-1/spdl-1/cpg-2/csnk-1/tcc-1/ani-3/mlc-5/chkr-1/pzf-1/lpin-1/cyp-31A2/cpar-1/egg-3/zhp-2/cdc-48.1/syp-3/syp-2/spo-11/rho-1/rad-54.L/rab-11.1/ptr-2/ppk-1/plk-3/oma-2/oma-1/mom-2/mog-2/mab-10/lin-23/ima-2/hpr-17/gsk-3/emb-30/dsh-1/cyd-1/coh-1/cmd-1/chk-2/cep-1/cpg-1/ced-6/atx-2"
+
+    ## [1] 52
+
+## Save the datasets
+
+Save the datasets so that readers can have access to the sets of genes
+within each category.
+
+``` r
+# output the list 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+write.csv(compareRBPclusters_BP_simple@compareClusterResult, file = "03_output/SPN4_assocRNAs_GO_Ontology.csv",
+          quote = FALSE)
+```
 
 ## Molecular Function
 
@@ -360,9 +342,26 @@ dev.off()
 ### Compare the clusters
 
 ![](250714_GOontolog_SPN4_mRNAs_files/figure-gfm/compareCC-1.png)<!-- -->
-\### Save the plot
+
+### Save the plot
 
 Print Cellular Components to a file
+
+``` r
+# Save the plot 
+setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+
+pdf("03_output/SPN4_OMA1_LIN41_dotPlot_CC.pdf", height = 5, width = 10)
+cluster.p1 <- dotplot(compareRBPclusters_CC_simple,
+              title = "GO Enrichment (Cellular Component)")
+cluster.p1 + theme(
+  axis.text.y = element_text(size = 15),
+  axis.text.x = element_text(size = 15),
+  legend.text = element_text(size = 15)
+  )
+
+dev.off()
+```
 
     ## quartz_off_screen 
     ##                 2
@@ -376,7 +375,7 @@ All category ontologies
 ![](250714_GOontolog_SPN4_mRNAs_files/figure-gfm/compareALL-1.png)<!-- -->
 \### Save the plot
 
-Print Molecular Function plot to a file
+Print All categories plot to a file
 
 ``` r
 # Save the plot 
