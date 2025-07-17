@@ -7,7 +7,7 @@ This repository accompanies the manuscript "The RNA-Binding Protein SPN-4 coordi
 
 ## 03 GO Ontology of SPN-4 associated mRNAs
 
-  * [GO Ontology report](../03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md))
+  * [GO Ontology report](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
 
 ## 04 Comparison with single-cell sequencing (Tintori et al., 2017)
 
