@@ -11,10 +11,11 @@ LIN-41, and OMA-1 associated mRNA categories. What GO ontology
 categories are over-represented in these?
 
 Note - what is the best background data? I tried two different
-“universe” or background datasets. 1) all present genes or 2) all Worm Base genes (default for Cluster Profiler). In
-the end, we chose the Worm Base geneset as a “universe” as this best
-addressed the question: what gene categories are enriched in the
-SPN-4, OMA-1, and LIN-41 associated mRNAs?
+“universe” or background datasets. 1) all present genes or 2) all Worm
+Base genes (default for Cluster Profiler). In the end, we chose the Worm
+Base geneset as a “universe” as this best addressed the question: what
+gene categories are enriched in the SPN-4, OMA-1, and LIN-41 associated
+mRNAs?
 
 ## Load modules
 
@@ -39,7 +40,9 @@ library(ggplot2)
 
 ## Initiate Cluster Profiler
 
-Select org.Ce.eg.db from
+Select org.Ce.eg.db from [Bioconductor Release (3.21), Bioconductor
+Annotation
+Packages](https://bioconductor.org/packages/3.21/data/annotation/).
 
 ``` r
 # BiocManager::install("org.Ce.eg.db")
@@ -86,6 +89,7 @@ RBP_list_of_vectors <- list(SPN4 = SPN4_list2, OMA1 = OMA1_list2, LIN41 = LIN41_
 ``` r
 # Compare the clusters 
 compareRBPclusters_BP <- compareCluster(geneCluster = RBP_list_of_vectors, fun = 'enrichGO', OrgDb = 'org.Ce.eg.db', ont = "BP", keyType="WORMBASE", pAdjustMethod = "BH", qvalueCutoff = 0.02)
+
 #universe =  Present_list2,
 compareRBPclusters_BP <- setReadable(compareRBPclusters_BP, OrgDb = 'org.Ce.eg.db', keyType="WORMBASE")
 
