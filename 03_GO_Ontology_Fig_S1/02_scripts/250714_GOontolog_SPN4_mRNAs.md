@@ -5,7 +5,7 @@ Erin Osborne Nishimura
 
 ## Goal of the project
 
-I want to detemrine which GO Ontology categories are enriched in the set
+The goal of this project is to determine which GO Ontology categories are enriched in the set
 of SPN-4 associated mRNAs and other categories of mRNAs. We have SPN-4,
 LIN-41, and OMA-1 associated mRNA categories. What GO ontology
 categories are over-represented in these?
