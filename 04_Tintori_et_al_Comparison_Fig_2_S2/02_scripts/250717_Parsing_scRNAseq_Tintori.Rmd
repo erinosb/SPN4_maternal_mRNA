@@ -370,7 +370,7 @@ mean_by_cluster <- clustered_changing_wide_df %>%
 # eda 
 dim(mean_by_cluster)
 meanbycluster <- as.data.frame(mean_by_cluster)
-meanbycluster
+#meanbycluster
 
 # convert the meanbycluster into longform data to plot using ggplot2:
 longer_means_by_cluster <- pivot_longer(meanbycluster, cols = 2:28, names_to ="cell",
@@ -417,25 +417,13 @@ dev.off()
 
 setwd(mywd)
 # import the gene lists
-OMA1_1 <- read.table(file = "01_input/tlists_from_02/20250711_OMA1_ONLY_list.txt")
-SPN4_2 <- read.table(file = "01_input/tlists_from_02/20250711_SPN4_ONLY_list.txt")
-LIN41_3 <- read.table(file = "01_input/tlists_from_02/20250711_LIN41_ONLY_list.txt")
-OMA1LIN41_4 <- read.table(file = "01_input/tlists_from_02/20250711_OMA1_LIN41_list.txt")
-OMA1SPN4_5 <- read.table(file = "01_input/tlists_from_02/20250711_OMA1_SPN4_list.txt")
-LIN41SPN4_6 <- read.table(file = "01_input/tlists_from_02/20250711_LIN41_and_SPN4_list.txt")
-ALL_7 <- read.table(file = "01_input/tlists_from_02/20250711_OMA1_SPN4_LIN41_list.txt")
-
-20250711_LIN41_and_SPN4_list.txt
-20250711_LIN41_list.txt
-20250711_LIN41_ONLY_list.txt
-20250711_OMA1_LIN41_list.txt
-20250711_OMA1_list.txt
-20250711_OMA1_ONLY_list.txt
-20250711_OMA1_SPN4_LIN41_list.txt
-20250711_OMA1_SPN4_list.txt
-20250711_SPN4_list.txt
-20250711_SPN4_ONLY_list.txt
-20250715_Presentlist.txt
+OMA1_1 <- read.table(file = "01_input/lists_from_02/20250711_OMA1_ONLY_list.txt")
+SPN4_2 <- read.table(file = "01_input/lists_from_02/20250711_SPN4_ONLY_list.txt")
+LIN41_3 <- read.table(file = "01_input/lists_from_02/20250711_LIN41_ONLY_list.txt")
+OMA1LIN41_4 <- read.table(file = "01_input/lists_from_02/20250711_OMA1_LIN41_list.txt")
+OMA1SPN4_5 <- read.table(file = "01_input/lists_from_02/20250711_OMA1_SPN4_list.txt")
+LIN41SPN4_6 <- read.table(file = "01_input/lists_from_02/20250711_LIN41_and_SPN4_list.txt")
+ALL_7 <- read.table(file = "01_input/lists_from_02/20250711_OMA1_SPN4_LIN41_list.txt")
 
 # eda
 str(OMA1_1)
@@ -501,3 +489,54 @@ ann2 <- cbind(ann, changing_wide_df_plusIP$IP)
 colnames(ann2) <- c("cluster_set", "IP")
 
 ann3 <- ann2
+
+```
+
+#### Make an annotated heatmap
+
+```{r heatmap3, echo = FALSE, warning = FALSE, message = FALSE}
+
+# Make an annotated heatmap using canaberra + complete:
+set.seed(2025)
+heatmap_caco5_ip <- pheatmap(changing_wide_mat, 
+                              cluster_cols = FALSE,
+                              scale = "row", 
+                              show_rownames = FALSE,
+                              annotation_colors = my_colour,
+                              clustering_distance_rows = "canberra", 
+                              clustering_method = "complete", 
+                              cutree_rows = 5,
+                              annotation_row=ann2)
+
+dim(changing_wide_mat)
+
+```
+
+
+#### Save the heatmap 
+
+This will be used as a Supplemental Figure
+
+
+```{r heatmap4, echo = TRUE, message = FALSE, warning = FALSE}
+# Save the heatmap:
+
+setwd(mywd)
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("03_output/", today, "_heatmap_clusters_and_IP.pdf", sep = "")
+pdf(filename4, width = 6, height = 8)
+heatmap_caco5_ip
+    
+dev.off()
+
+# This didn't work. Had to use Export -> Export as Jpeg
+filename5 <- paste("03_output/", today, "_heatmap_clusters_and_IP.jpg", sep = "")
+jpeg(filename5, width = 6, height = 8)
+
+heatmap_caco5_ip
+
+dev.off()
+
+
+
+```
