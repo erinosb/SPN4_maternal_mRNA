@@ -7,7 +7,7 @@ This repository accompanies the manuscript "The RNA-Binding Protein SPN-4 coordi
 
 ## [03 GO Ontology - report](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
 
-## 04 Comparison with single-cell sequencing - report
+## [04 Comparison with single-cell sequencing - report](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts/250717_Parsing_scRNAseq_Tintori.md)
 
 ## 05 spn-4 mutant smFISH analysis
 
