@@ -326,11 +326,6 @@ heatmap_caco5_ann <- pheatmap(changing_wide_mat,
 
 ![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/heatmap1-2.png)<!-- -->
 
-Save the heatmap to a file:
-
-    ## quartz_off_screen 
-    ##                 2
-
 ------------------------------------------------------------------------
 
 ### Split genes into clusters based on heatmap
@@ -498,15 +493,20 @@ things manually.
 ``` r
 # Save the heatmap:
 
-#setwd(mywd)
-#today <- format(Sys.Date(), "%y%m%d")
-#filename4 <- paste("03_output/", today, "_heatmap_clusters_and_IP.pdf", sep = "")
-#pdf(filename4, width = 6, height = 8)
+setwd(mywd)
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("03_output/", today, "_heatmap_clusters_and_IP.pdf", sep = "")
+pdf(filename4, width = 6, height = 8)
 
-#heatmap_caco5_ip
+heatmap_caco5_ip
     
-#dev.off()
+dev.off()
+```
 
+    ## quartz_off_screen 
+    ##                 2
+
+``` r
 # This didn't work. Had to use Export -> Export as Jpeg
 #filename5 <- paste("03_output/", today, "_heatmap_clusters_and_IP.jpg", sep = "")
 #jpeg(filename5, width = 6, height = 8)

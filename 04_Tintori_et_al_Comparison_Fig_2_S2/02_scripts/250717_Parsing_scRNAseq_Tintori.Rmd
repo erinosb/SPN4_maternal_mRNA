@@ -351,24 +351,6 @@ heatmap_caco5_ann <- pheatmap(changing_wide_mat,
 
 ```
 
-Save the heatmap to a file:
-
-```{r heatmap2, echo = FALSE, message = FALSE, warning = FALSE}
-
-# Set dir
-setwd(mywd)
-
-# Save this plot: 
-today <- format(Sys.Date(), "%y%m%d")
-filename1 <- paste("03_output/", today, "_Heatmap_Tintori_changing_present_transcripts_clust_ann.pdf", sep = "")
-pdf(filename1, height = 8, width = 6)
-
-heatmap_caco5_ann
-dev.off()
-
-# OK, so the gene clusters I want are clusters 5 and 3: 
-
-```
 
 ---- 
 
@@ -580,14 +562,14 @@ Note, the .pdf and .jpg output was too big for github. Had to export things manu
 ```{r heatmap4, echo = TRUE, message = FALSE, warning = FALSE}
 # Save the heatmap:
 
-#setwd(mywd)
-#today <- format(Sys.Date(), "%y%m%d")
-#filename4 <- paste("03_output/", today, "_heatmap_clusters_and_IP.pdf", sep = "")
-#pdf(filename4, width = 6, height = 8)
+setwd(mywd)
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("03_output/", today, "_heatmap_clusters_and_IP.pdf", sep = "")
+pdf(filename4, width = 6, height = 8)
 
-#heatmap_caco5_ip
+heatmap_caco5_ip
     
-#dev.off()
+dev.off()
 
 # This didn't work. Had to use Export -> Export as Jpeg
 #filename5 <- paste("03_output/", today, "_heatmap_clusters_and_IP.jpg", sep = "")
