@@ -8,11 +8,11 @@ output:
 
 # Transcriptional dynamics of SPN-4 associated mRNAs through early embryonic development
 
-This analysis utilizes a single-cell resolution RNA-seq dataset that assesses expression patterns through the first five cell divisions in _C. elegans_ (Tintori et al., 2016). The goal of this study is to test the hypothesis that SPN-4 may be involved in clearing maternal mRNAs out of early embryos. If this is the case, we would expect to see that SPN-4 associated mRNAs are enriched in clusters of transcripts that undergo decline in early embryos. 
+This analysis utilizes a single-cell resolution RNA-seq dataset that assesses expression patterns through the first five cell divisions in _C. elegans_ (Tintori et al., 2016). The goal of this study is to test the hypothesis that SPN-4 may be involved in clearing maternal mRNAs out of early embryos. If this is the case, we would expect to see that SPN-4 associated mRNAs are enriched in clusters of maternal transcripts that undergo decline in early embryos. 
 
 Reference:
 
-[Tintori SC, Osborne Nishimura E, Golden P, Lieb JD, Goldstein B. A Transcriptional Lineage of the Early C. elegans Embryo](https://pubmed.ncbi.nlm.nih.gov/27554860). Dev Cell. 2016 Aug 22;38(4):430-44. doi: 10.1016/j.devcel.2016.07.025. PMID: 27554860; PMCID: PMC4999266.
+Tintori SC, Osborne Nishimura E, Golden P, Lieb JD, Goldstein B. [A Transcriptional Lineage of the Early C. elegans Embryo](https://pubmed.ncbi.nlm.nih.gov/27554860). Dev Cell. 2016 Aug 22;38(4):430-44. doi: 10.1016/j.devcel.2016.07.025. PMID: 27554860; PMCID: PMC4999266.
 
 
 ## Load Packages
@@ -372,7 +372,7 @@ dev.off()
 
 ---- 
 
-## Split genes into clusters based on heatmap 
+### Split genes into clusters based on heatmap 
 
 Take the clusters generated in heatmap_caco5_ann heatmap and split them into clusters of gene lists.
 
@@ -435,11 +435,11 @@ lineplot_clusters <- ggplot(longer_means_by_cluster, aes(x=cell, y=intensity, gr
   scale_color_manual(values = vcolors) +
   facet_grid(rows = vars(cluster))
 
-#lineplot_clusters
+lineplot_clusters
 
 ```
 
-# Save theis plot to annotate the heatmap:
+### Save lineplot split by clusters
 
 Supplemental Figure
 
@@ -458,9 +458,11 @@ dev.off()
 ```
 
 
-## import the gene lists of SPN-4, OMA-1, and LIN-41 targets
+### import the gene lists of SPN-4, OMA-1, and LIN-41 targets
 
 The next goal will be to assess which clusters contain SPN-4, OMA-1, and LIN-41 associated mRNAs and to what degree. The predition is that if SPN-4 is associated with mRNA decay, then the clusters that are driven by decay of maternal mRNAs will have a higher propensity of SPN-4 associated mRNAs.
+
+These lists of sets are from [a previous analysis within this same github repository](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/02_SPN4_LIN41_OMA1_Comparison_Fig_1_S1/04_output_data)
 
 ```{r import5, echo = TRUE, warning = FALSE, message = FALSE}
 
@@ -544,7 +546,7 @@ ann3 <- ann2
 
 ```
 
-#### Make an annotated heatmap
+### Make an annotated heatmap
 
 This is the heatmap that will be used in the paper as a supplemental figure. Tintori et al data plotted as a heatmap, with cell-types sorted by stage and anterior-to-posterior orientation, colored for the different clusters, and annotated for the SPN-4, OMA-1, and LIN-41 associated mRNAs. 
 
@@ -566,12 +568,10 @@ heatmap_caco5_ip <- pheatmap(changing_wide_mat,
 
 #dim(changing_wide_mat)
 
-
-
 ```
 
 
-#### Save the heatmap 
+### Save the heatmap 
 
 This will be used as a Supplemental Figure. 
 
@@ -601,8 +601,9 @@ Note, the .pdf and .jpg output was too big for github. Had to export things manu
 
 ```
 
+## Mosaic plots
 
-### Make mosaicplots split by RNA cohort
+Make mosaicplots split by RNA cohort
 
 ```{r lineplots4, echo = TRUE, message = FALSE, warning = FALSE}
 
@@ -618,9 +619,6 @@ ann3$IP <- factor(ann3$IP, levels = c("OMA-1", "SPN-4", "LIN-41", "OMA-1_LIN-41"
 ann3tabs <- xtabs(~ cluster_set + IP, data = ann3)
 mosaicplot1 <- mosaic(ann3tabs, gp = shading_max, 
                       split_horizontal = TRUE)
-
-mosaic(ann3tabs, gp = shading_max, 
-       split_horizontal = TRUE)
 
 # Create a barplot tabulating the % of SPN-4 associated genes within each cluster
 tabs_dataframe <- as.data.frame(mosaicplot1)
@@ -639,16 +637,19 @@ vcolors = plasma(7)[1:5]
 #vcolors[1]
 
 # Barplot 
-bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, ylim = c(0, 20),
+bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, xlim = c(0, 20),
         names.arg = c("Cluster 1", "Cluster 4", "Cluster 3", "Cluster 5", "Cluster 2"),
         xlab = "Cluster Set", 
         ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
-        col = vcolors)
+        col = vcolors, 
+        horiz = TRUE,
+        las = 1)
 # Add text
-text(x = bp1, y = SPN4_Percentage_plot$SPN_percent + 0.5, labels = textSPN)
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = bp1, labels = textSPN)
 
 ```
-#### Save the barplot (% SPN-4 associated mRNAs in each clusteer)
+
+### Save the barplot (% SPN-4 associated mRNAs in each clusteer)
 
 This will be a Supplementary Figure
 
@@ -662,20 +663,22 @@ filename4 <- paste("03_output/", today, "_SPN4_percentage_barplot.pdf", sep = ""
 setwd(mywd)
 pdf(filename4, width = 5, height = 5)
 
-bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, ylim = c(0, 20),
+bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, xlim = c(0, 20),
         names.arg = c("Cluster 1", "Cluster 4", "Cluster 3", "Cluster 5", "Cluster 2"),
         xlab = "Cluster Set", 
         ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
-        col = vcolors)
+        col = vcolors, 
+        horiz = TRUE,
+        las = 1)
 # Add text
-text(x = bp1, y = SPN4_Percentage_plot$SPN_percent + 0.5, labels = textSPN)
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = bp1, labels = textSPN)
 
 dev.off()
 
 ```
 
 
-#### Save the mosaic plot
+### Save the mosaic plot
 
 Supplemental Figure. 
 
@@ -696,7 +699,9 @@ dev.off()
 
 ```
 
-### Lineplots of abundance in the Tintori dataset, split out by RNA cohort
+## Lineplots, split by cluster set
+
+Create lineplots of abundance in the Tintori dataset, split out by cluster or by RBP Association
 
 Supplemental Figure
 
@@ -742,7 +747,7 @@ lineplot_IP <- ggplot(longer_means_by_IP, aes(x=cell, y=intensity, group=IP, col
 lineplot_IP
 ```
 
-#### Save the lineplot
+### Save the lineplot
 
 
 ```{r lineplotExport, echo = TRUE, message = FALSE, warning = FALSE}

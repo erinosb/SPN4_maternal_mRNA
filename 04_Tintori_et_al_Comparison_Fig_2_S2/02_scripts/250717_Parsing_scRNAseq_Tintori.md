@@ -16,26 +16,26 @@
     - [Import Wormbase identifiers](#import-wormbase-identifiers)
     - [Merge the tintori data with the Wormbase Gene
       identifiers](#merge-the-tintori-data-with-the-wormbase-gene-identifiers)
-  - [Heatmaps](#heatmaps)
     - [Import the prefered cell order](#import-the-prefered-cell-order)
+  - [Heatmaps](#heatmaps)
     - [Re-organize datasets by preferred cell type
       order](#re-organize-datasets-by-preferred-cell-type-order)
       - [Optimize for preferred heatmap type (not included in
         paper)](#optimize-for-preferred-heatmap-type-not-included-in-paper)
-  - [SAVE CLUSTER LISTS - PLOT LINEPLOTS BY CLUSTER
-    LIST](#save-cluster-lists---plot-lineplots-by-cluster-list)
-- [Save theis plot to annotate the
-  heatmap:](#save-theis-plot-to-annotate-the-heatmap)
-  - [import the gene lists of SPN-4, OMA-1, and LIN-41
-    targets](#import-the-gene-lists-of-spn-4-oma-1-and-lin-41-targets)
+    - [Split genes into clusters based on
+      heatmap](#split-genes-into-clusters-based-on-heatmap)
+    - [Save lineplot split by
+      clusters](#save-lineplot-split-by-clusters)
+    - [import the gene lists of SPN-4, OMA-1, and LIN-41
+      targets](#import-the-gene-lists-of-spn-4-oma-1-and-lin-41-targets)
     - [Make an annotated heatmap](#make-an-annotated-heatmap)
     - [Save the heatmap](#save-the-heatmap)
-    - [Make mosaicplots split by RNA
-      cohort](#make-mosaicplots-split-by-rna-cohort)
-      - [Save the mosaic plot](#save-the-mosaic-plot)
-    - [Lineplots of abundance in the Tintori dataset, split out by RNA
-      cohort](#lineplots-of-abundance-in-the-tintori-dataset-split-out-by-rna-cohort)
-      - [Save the lineplot](#save-the-lineplot)
+  - [Mosaic plots](#mosaic-plots)
+    - [Save the barplot (% SPN-4 associated mRNAs in each
+      clusteer)](#save-the-barplot--spn-4-associated-mrnas-in-each-clusteer)
+    - [Save the mosaic plot](#save-the-mosaic-plot)
+  - [Lineplots, split by cluster set](#lineplots-split-by-cluster-set)
+    - [Save the lineplot](#save-the-lineplot)
   - [Session info](#session-info)
 
 # Transcriptional dynamics of SPN-4 associated mRNAs through early embryonic development
@@ -45,12 +45,12 @@ assesses expression patterns through the first five cell divisions in
 *C. elegans* (Tintori et al., 2016). The goal of this study is to test
 the hypothesis that SPN-4 may be involved in clearing maternal mRNAs out
 of early embryos. If this is the case, we would expect to see that SPN-4
-associated mRNAs are enriched in clusters of transcripts that undergo
-decline in early embryos.
+associated mRNAs are enriched in clusters of maternal transcripts that
+undergo decline in early embryos.
 
 Reference:
 
-[Tintori SC, Osborne Nishimura E, Golden P, Lieb JD, Goldstein B. A
+Tintori SC, Osborne Nishimura E, Golden P, Lieb JD, Goldstein B. [A
 Transcriptional Lineage of the Early C. elegans
 Embryo](https://pubmed.ncbi.nlm.nih.gov/27554860). Dev Cell. 2016 Aug
 22;38(4):430-44. doi: 10.1016/j.devcel.2016.07.025. PMID: 27554860;
@@ -224,18 +224,30 @@ dim(tintori_nest_by_transcript)
 #head(tintori_nest_by_transcript)
 ```
 
-------------------------------------------------------------------------
-
-## Heatmaps
-
-    ## [1] 14776     5
-
-#### Import the prefered cell order
+### Import the prefered cell order
 
 This is a file I just typed up with the blastomeres listed by
 developmental time and anterior-to-posterior orientation.
 
+------------------------------------------------------------------------
+
+## Heatmaps
+
+Preprocessing the data for heatmaps by making the pre-processed heatmap
+matrix.
+
+- Filter for total RPKM \> 5
+- Filter for variance \> 10
+- Select only the most relevant columns
+
+<!-- -->
+
+    ## [1] 14776     5
+
 ### Re-organize datasets by preferred cell type order
+
+Merge pre-processed, heatmap-ready matrix with the preferred cell order
+information.
 
     ##  [1] "AB"    "ABa"   "ABal"  "ABalx" "ABar"  "ABarx" "ABp"   "ABpl"  "ABplx"
     ## [10] "ABpr"  "ABprx" "C"     "Cx1"   "Cx2"   "D"     "E"     "EMS"   "Ea"   
@@ -250,9 +262,14 @@ I tested the following settings for heatmaps:
 - “ward.D”, “ward.D2”, “single”, “complete”, “average” (= UPGMA),
   “mcquitty” (= WPGMA), “median” (= WPGMC) or “centroid” (= UPGMC).
 
-Included: Cannaberra complete heatmap
+Processing:
+
+- Use Canaberra complete to draw a heatmap and to split it into clusters
+- Cut the heatmap into 5 clusters
+- Annotate the cluster names back onto the original heatmap
 
 ``` r
+# Canabarra, complete looks best
 # Euclidean also looks good
 # "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
 #wardD - looks good
@@ -292,9 +309,7 @@ rownames(ann) = rownames(clustered_changing_wide_mat)
 vcolors = plasma(7)[1:5]
 #vcolors[1]
 
-
 my_colour = list(cluster_set = c( "1" = vcolors[1], "2" = vcolors[5], "3" = vcolors[3], "4" = vcolors[2], "5" = vcolors[4]))
-
 
 # Make an annotated heatmap using canaberra + complete:
 #set.seed(2025)
@@ -318,7 +333,7 @@ Save the heatmap to a file:
 
 ------------------------------------------------------------------------
 
-## SAVE CLUSTER LISTS - PLOT LINEPLOTS BY CLUSTER LIST
+### Split genes into clusters based on heatmap
 
 Take the clusters generated in heatmap_caco5_ann heatmap and split them
 into clusters of gene lists.
@@ -333,7 +348,9 @@ This will be a supplemental figure
 
     ## [1]  5 28
 
-# Save theis plot to annotate the heatmap:
+![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/clusterlists-1.png)<!-- -->
+
+### Save lineplot split by clusters
 
 Supplemental Figure
 
@@ -352,13 +369,17 @@ dev.off()
     ## quartz_off_screen 
     ##                 2
 
-## import the gene lists of SPN-4, OMA-1, and LIN-41 targets
+### import the gene lists of SPN-4, OMA-1, and LIN-41 targets
 
 The next goal will be to assess which clusters contain SPN-4, OMA-1, and
 LIN-41 associated mRNAs and to what degree. The predition is that if
 SPN-4 is associated with mRNA decay, then the clusters that are driven
 by decay of maternal mRNAs will have a higher propensity of SPN-4
 associated mRNAs.
+
+These lists of sets are from [a previous analysis within this same
+github
+repository](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/02_SPN4_LIN41_OMA1_Comparison_Fig_1_S1/04_output_data)
 
 ``` r
 setwd(mywd)
@@ -457,7 +478,7 @@ colnames(ann2) <- c("cluster_set", "IP")
 ann3 <- ann2
 ```
 
-#### Make an annotated heatmap
+### Make an annotated heatmap
 
 This is the heatmap that will be used in the paper as a supplemental
 figure. Tintori et al data plotted as a heatmap, with cell-types sorted
@@ -467,7 +488,7 @@ associated mRNAs.
 
 ![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/heatmap3-1.png)<!-- -->
 
-#### Save the heatmap
+### Save the heatmap
 
 This will be used as a Supplemental Figure.
 
@@ -495,7 +516,9 @@ things manually.
 #dev.off()
 ```
 
-### Make mosaicplots split by RNA cohort
+## Mosaic plots
+
+Make mosaicplots split by RNA cohort
 
 ``` r
 ann3$cluster_set <- factor(ann3$cluster_set, levels = c(1, 4, 3, 5, 2))
@@ -515,13 +538,6 @@ mosaicplot1 <- mosaic(ann3tabs, gp = shading_max,
 ![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/lineplots4-1.png)<!-- -->
 
 ``` r
-mosaic(ann3tabs, gp = shading_max, 
-       split_horizontal = TRUE)
-```
-
-![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/lineplots4-2.png)<!-- -->
-
-``` r
 # Create a barplot tabulating the % of SPN-4 associated genes within each cluster
 tabs_dataframe <- as.data.frame(mosaicplot1)
 
@@ -539,17 +555,20 @@ vcolors = plasma(7)[1:5]
 #vcolors[1]
 
 # Barplot 
-bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, ylim = c(0, 20),
+bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, xlim = c(0, 20),
         names.arg = c("Cluster 1", "Cluster 4", "Cluster 3", "Cluster 5", "Cluster 2"),
         xlab = "Cluster Set", 
         ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
-        col = vcolors)
+        col = vcolors, 
+        horiz = TRUE,
+        las = 1)
 # Add text
-text(x = bp1, y = SPN4_Percentage_plot$SPN_percent + 0.5, labels = textSPN)
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = bp1, labels = textSPN)
 ```
 
-![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/lineplots4-3.png)<!-- -->
-\#### Save the barplot (% SPN-4 associated mRNAs in each clusteer)
+![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/lineplots4-2.png)<!-- -->
+
+### Save the barplot (% SPN-4 associated mRNAs in each clusteer)
 
 This will be a Supplementary Figure
 
@@ -562,13 +581,15 @@ filename4 <- paste("03_output/", today, "_SPN4_percentage_barplot.pdf", sep = ""
 setwd(mywd)
 pdf(filename4, width = 5, height = 5)
 
-bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, ylim = c(0, 20),
+bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, xlim = c(0, 20),
         names.arg = c("Cluster 1", "Cluster 4", "Cluster 3", "Cluster 5", "Cluster 2"),
         xlab = "Cluster Set", 
         ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
-        col = vcolors)
+        col = vcolors, 
+        horiz = TRUE,
+        las = 1)
 # Add text
-text(x = bp1, y = SPN4_Percentage_plot$SPN_percent + 0.5, labels = textSPN)
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = bp1, labels = textSPN)
 
 dev.off()
 ```
@@ -576,7 +597,7 @@ dev.off()
     ## quartz_off_screen 
     ##                 2
 
-#### Save the mosaic plot
+### Save the mosaic plot
 
 Supplemental Figure.
 
@@ -598,7 +619,10 @@ dev.off()
     ## quartz_off_screen 
     ##                 2
 
-### Lineplots of abundance in the Tintori dataset, split out by RNA cohort
+## Lineplots, split by cluster set
+
+Create lineplots of abundance in the Tintori dataset, split out by
+cluster or by RBP Association
 
 Supplemental Figure
 
@@ -645,7 +669,7 @@ lineplot_IP
 
 ![](250717_Parsing_scRNAseq_Tintori_files/figure-gfm/lineplots5-1.png)<!-- -->
 
-#### Save the lineplot
+### Save the lineplot
 
 ``` r
 # Save theis plot to annotate the heatmap:
