@@ -69,7 +69,7 @@ colnames(metadata_tintori) <- c("sample", "cellID", "stage", "rep")
 # Re-order by sample name
 metadata_tintori <- metadata_tintori[order(metadata_tintori$sample),]
 dim(metadata_tintori)
-head(metadata_tintori)
+#head(metadata_tintori)
 ```
 
 ### Import Tintori et al Normalized RNA-seq data
@@ -88,7 +88,7 @@ dim(tintori)
 # Transform the RNA-seq data long-wise using tidyverse
 tintori_long <- pivot_longer(tintori, cols = 2:220, names_to ="sample", values_to = "rpkm")
 dim(tintori_long)
-head(tintori_long)
+#head(tintori_long)
 ```
 
 ### Join the metadata and RNA-seq data
@@ -100,7 +100,7 @@ tintori_merged <- left_join(tintori_long, metadata_tintori)
 
 # Remove tossed cellIDs
 dim(tintori_merged)
-head(tintori_merged)
+#head(tintori_merged)
 ```
 
 ### Filter the data
@@ -156,13 +156,33 @@ tintori_nest_by_transcript <- left_join(tintori_nest_by_transcript, wormbaseIDs,
   select( c("transcript", "WormBase_Gene_ID", "Public_Name", "data"))
   
 dim(tintori_nest_by_transcript)
-head(tintori_nest_by_transcript)
+#head(tintori_nest_by_transcript)
+
+```
+### Import the prefered cell order
+
+This is a file I just typed up with the blastomeres listed by developmental time and anterior-to-posterior orientation.
+
+```{r import4, echo = FALSE, message = FALSE, warning = FALSE}
+
+# Set dir
+setwd(mywd)
+
+# Order the cell types by stage and anterior-> posterior like so:
+cellType_sorted <- read.table(file = "01_input/cellTypes_sorted.txt", header = TRUE)
+#cellType_sorted
 
 ```
 
 ----
 
 ## Heatmaps 
+
+Preprocessing the data for heatmaps by making the pre-processed heatmap matrix.
+
+  * Filter for total RPKM > 5
+  * Filter for variance > 10 
+  * Select only the most relevant columns
 
 ```{r makematrix1, echo = FALSE, warning = FALSE, message = FALSE}
 
@@ -240,23 +260,11 @@ changing_wide_mat <- as.matrix(changing_wide_df)
 ```
 
 
-#### Import the prefered cell order
 
-This is a file I just typed up with the blastomeres listed by developmental time and anterior-to-posterior orientation.
-
-```{r import4, echo = FALSE, message = FALSE, warning = FALSE}
-
-# Set dir
-setwd(mywd)
-
-# Order the cell types by stage and anterior-> posterior like so:
-cellType_sorted <- read.table(file = "01_input/cellTypes_sorted.txt", header = TRUE)
-cellType_sorted
-
-```
 
 ### Re-organize datasets by preferred cell type order
 
+Merge pre-processed, heatmap-ready matrix with the preferred cell order information. 
 
 ```{r makematrix2, echo = FALSE, message = FALSE, warning = FALSE}
 
@@ -282,11 +290,16 @@ I tested the following settings for heatmaps:
   * Euclidean also looks good
   * "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
 
-Included: Cannaberra complete heatmap
+Processing: 
+
+  * Use Canaberra complete to draw a heatmap and to split it into clusters
+  * Cut the heatmap into 5 clusters
+  * Annotate the cluster names back onto the original heatmap
+
 
 ```{r heatmap1, echo = TRUE, message = FALSE, warning = FALSE}
 
-
+# Canabarra, complete looks best
 # Euclidean also looks good
 # "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
 #wardD - looks good
@@ -322,12 +335,10 @@ rownames(ann) = rownames(clustered_changing_wide_mat)
 vcolors = plasma(7)[1:5]
 #vcolors[1]
 
-
 my_colour = list(cluster_set = c( "1" = vcolors[1], "2" = vcolors[5], "3" = vcolors[3], "4" = vcolors[2], "5" = vcolors[4]))
 
-
 # Make an annotated heatmap using canaberra + complete:
-set.seed(2025)
+#set.seed(2025)
 heatmap_caco5_ann <- pheatmap(changing_wide_mat, 
          cluster_cols = FALSE,
          scale = "row", 
@@ -361,7 +372,7 @@ dev.off()
 
 ---- 
 
-## SAVE CLUSTER LISTS - PLOT LINEPLOTS BY CLUSTER LIST
+## Split genes into clusters based on heatmap 
 
 Take the clusters generated in heatmap_caco5_ann heatmap and split them into clusters of gene lists.
 
@@ -424,7 +435,7 @@ lineplot_clusters <- ggplot(longer_means_by_cluster, aes(x=cell, y=intensity, gr
   scale_color_manual(values = vcolors) +
   facet_grid(rows = vars(cluster))
 
-lineplot_clusters
+#lineplot_clusters
 
 ```
 
@@ -497,7 +508,6 @@ LIN41SPN4_6 <- LIN41SPN4_6 %>%
 
 ALL_7 <- ALL_7 %>% 
   mutate(IP = "OMA-1_SPN-4_LIN-41")
-ALL_7
 
 # merge the gene lists
 IP_lookup <- rbind(OMA1_1, SPN4_2, LIN41_3, OMA1LIN41_4, OMA1SPN4_5, LIN41SPN4_6, ALL_7)
@@ -526,7 +536,7 @@ changing_wide_df_plusIP <- column_to_rownames(changing_wide_IP[,1:30])
 #head(changing_wide_df_plusIP)
 table(rownames(ann) == rownames(changing_wide_df_plusIP))
 
-changing_wide_df_plusIP
+#changing_wide_df_plusIP
 ann2 <- cbind(ann, changing_wide_df_plusIP$IP)
 colnames(ann2) <- c("cluster_set", "IP")
 
@@ -552,9 +562,9 @@ heatmap_caco5_ip <- pheatmap(changing_wide_mat,
                               cutree_rows = 5,
                               annotation_row=ann2)
 
-heatmap_caco5_ip
+#heatmap_caco5_ip
 
-dim(changing_wide_mat)
+#dim(changing_wide_mat)
 
 
 
@@ -601,9 +611,7 @@ ann3$cluster_set <- factor(ann3$cluster_set, levels = c(1, 4, 3, 5, 2))
 #ann3$cluster_set
 ann3[which(is.na(ann3$IP)), 2] <- "none"
 ann3$IP <- factor(ann3$IP, levels = c("OMA-1", "SPN-4", "LIN-41", "OMA-1_LIN-41", "OMA-1_SPN-4", "LIN-41_SPN-4", "OMA-1_SPN-4_LIN-41", "none"))
-ann3
-  
-table(ann3)
+
 #ann3
 #str(ann3)
 
@@ -664,7 +672,6 @@ text(x = bp1, y = SPN4_Percentage_plot$SPN_percent + 0.5, labels = textSPN)
 
 dev.off()
 
-
 ```
 
 
@@ -715,20 +722,16 @@ mean_by_IP <- clustered_changing_wide_ann2 %>%
   summarise_all("mean")
 
 # eda 
-dim(mean_by_IP)
-mean_by_IP
+#dim(mean_by_IP)
+#mean_by_IP
 mean_by_IP <- as.data.frame(mean_by_IP)
-mean_by_IP
 
 # convert the meanbycluster into longform data to plot using ggplot2:
 longer_means_by_IP <- pivot_longer(mean_by_IP, cols = 2:28, names_to = "cell",
                                         values_to = "intensity")
 
 # Set cell ID as an ordered factor
-longer_means_by_IP
 longer_means_by_IP$cell <- factor(longer_means_by_IP$cell, levels = colnames(changing_wide_mat))
-
-longer_means_by_IP
 
 # create lineplots of the trend over cell type for each cluster
 lineplot_IP <- ggplot(longer_means_by_IP, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
