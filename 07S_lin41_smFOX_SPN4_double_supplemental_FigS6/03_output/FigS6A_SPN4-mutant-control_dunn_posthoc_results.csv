@@ -1,0 +1,7 @@
+".y.","group1","group2","n1","n2","statistic","p","p.adj","p.adj.signif"
+"lin_41_mRNA_molecules","2-cell_N2","2-cell_wDMP91_bright",31,9,2.95611268516612,0.00311543245465423,0.0186925947279254,"*"
+"lin_41_mRNA_molecules","2-cell_N2","4-cell_N2",31,14,-4.10847608502005,3.9827843693927e-05,0.000238967062163562,"***"
+"lin_41_mRNA_molecules","2-cell_N2","4-cell_wDMP91_bright",31,7,1.55945723244649,0.118888199392184,0.713329196353107,"ns"
+"lin_41_mRNA_molecules","2-cell_wDMP91_bright","4-cell_N2",9,14,-5.71625863868977,1.0889495610732e-08,6.53369736643921e-08,"****"
+"lin_41_mRNA_molecules","2-cell_wDMP91_bright","4-cell_wDMP91_bright",9,7,-0.926126044759513,0.354380480300758,1,"ns"
+"lin_41_mRNA_molecules","4-cell_N2","4-cell_wDMP91_bright",14,7,4.26762949178899,1.97561095000658e-05,0.000118536657000395,"***"
