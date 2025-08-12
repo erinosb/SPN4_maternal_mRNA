@@ -192,23 +192,18 @@ head(AllGenes_SPN4)
 str(AllGenes_SPN4)
 dim(AllGenes_SPN4)
 
-# Select for enrichments over -2
-colnames(AllGenes_SPN4)
-SPN4_wide_2cutoff_2FPKM <- AllGenes_SPN4 %>%
-  filter(spn4_enrichment > -2) %>%
-  filter(Log2_SPN.4_LYSATE_FPKM > 2)
-
-# Create rownames
-rownames(SPN4_wide_2cutoff_2FPKM) <- SPN4_wide_2cutoff_2FPKM$gene_ID
-
-
+head(AllGenes_SPN4)[,6:8]
+# Trim and create a matrix:
+SPN4_widematrix2 <- AllGenes_SPN4[,6:8]
+SPN4_widematrix2
+SPN4_widematrix3 <- as.matrix(SPN4_widematrix2)
+head(SPN4_widematrix3)
 
 # Trim and create a matrix:
 SPN4_widematrix2 <- SPN4_wide_2cutoff_2FPKM[,6:8]
 SPN4_widematrix2
 SPN4_widematrix3 <- as.matrix(SPN4_widematrix2)
 head(SPN4_widematrix3)
-
 
 # Calculate the distances between each sample
 sampleDists <- dist(t(SPN4_widematrix3)) 
