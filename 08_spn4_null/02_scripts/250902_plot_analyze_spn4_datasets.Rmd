@@ -1,0 +1,393 @@
+---
+title: "Analyze and plot total RNA counts in spn-4 wild-type v. spn-4 null strains"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 4
+---
+
+# Load Required packages
+
+  - tidyverse
+  - dplyr
+  - ggplot2
+  - ggthemes
+  - ggpubr
+  - rstatix
+  - pheatmap
+
+```{r setup,  echo = FALSE, warning = FALSE, message = FALSE}
+print("script initiated on", quote = FALSE)
+Sys.time()
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(ggpubr)
+library(rstatix)
+library(pheatmap)
+
+
+```
+
+# Import the RNA molecule counts from smFISH/smiFISH images
+
+Import the data. The file is 'all_spn4_smiFISH_quantification_250902.csv' and it is included as a Supplemental Data table.
+
+These quantifications generated from smFISH and smiFISH microscopy images performed on strain DG5256, a spn-4 balancer strain and on N2, the standard strain. In this DG5256, embryos that were produced by spn-4::gfp mothers fluoresce green and are labeled here as spn4_plus. In DG5256, embryos that were produced from spn-4 null mothers do not fluoresce green and are labeled here as spn4_minus. Embryos from the strain N2 are labeled spn4_wt. 
+
+```{r import, echo = TRUE, warning = FALSE}
+# import the data files
+mywd <- "~/Library/CloudStorage/Dropbox/github/SPN4_maternal_mRNA/08_spn4_null"
+setwd(mywd)
+all_spn4_dataset <- read.table(file = "01_input/all_spn4_smiFISH_quantification_250902.csv", header = TRUE, sep = ",")
+
+#Set the cell stage and genotypes as ordered factors
+all_spn4_dataset$cell_stage <- factor(all_spn4_dataset$cell_stage, levels = c("2-cell", "4-cell", "8-11-cell", "12-15-cell", "16-28-cell"))
+all_spn4_dataset$spn4 <- factor(all_spn4_dataset$spn4, levels = c("spn4_plus", "spn4_minus", "spn4_wt"))
+
+#EDA on the spn4 dataset:
+dim(all_spn4_dataset)
+head(all_spn4_dataset)
+
+```
+
+
+# Data munging
+
+Group the data by transcript and cell type and calculate the total number of RNA molecules (and standard deviation) for each of those condition combinations. 
+
+```{r munging, echo = TRUE, warning = FALSE, message = FALSE}
+
+# Make quant table: 1) group by genotype & cell stage and 2) calculate mean & sd, optional 
+allmRNAs_quantTable <- all_spn4_dataset %>%
+  dplyr::group_by(transcript, spn4, cell_stage) %>%
+  dplyr::summarise(mean = mean(total_no_RNA), sd = sd(total_no_RNA))
+
+#head(allmRNAs_quantTable)
+#str(allmRNAs_quantTable)
+
+```
+
+
+# Calculate Adjusted P-values using T Tests & P-Adjust
+
+T-tests were used to determine significant differences. I am primarily interested in contrasting the SPN-4 minus condition versus the SPN-4 wild type to determine how SPN-4 influences mRNA abundance. In addition, I want to focus in on how SPN-4 plus contrasts from wild-type conditions to determine how the SPN-4::GFP fusion construct acts as a hypomorph compared to the wild type SPN-4. 
+
+T-tests were performed with setting var.equal = FALSE (default) such that Welch approximation will be used to take into account variances of unequal values.
+
+I tested both Bonferonni correction and Benjamini-Hochberg multiple test corrections. The Bonferroni correction was too severe, but B&H worked well. I will go with the B&H version here.
+
+```{r ttests, echo = TRUE, warning = FALSE}
+
+# Use the following dataframe:
+# all_spn4_dataset
+
+# Calculate t-test significance. 
+# Adjust p-values by BH correction
+stat.test_BH <- all_spn4_dataset %>%
+  group_by(transcript, cell_stage) %>%
+  t_test(total_no_RNA ~ spn4) %>%
+  adjust_pvalue(method = "BH") %>%
+  add_significance("p.adj") %>%
+  add_xy_position(x = "cell_stage" , fun = "max", dodge = 0.8 , scales = "free")
+
+# Set some y-values that will be used to plot the adjusted p-values on the plot. In each case, 
+# spn-4 minus v. spn-4 plus will be on TOP, spn-4 minus versus N2 will be in the MIDDLE and
+# spn4-plus v. N2 will be on the BOTTOM.
+stat.test_BH_plus_1000 <- stat.test_BH%>%
+  mutate(compare = case_when(group1=="spn4_plus" & group2=="spn4_minus" ~  1000,
+                           group1=="spn4_minus" & group2=="spn4_wt" ~ 500,
+                           group1=="spn4_plus" & group2=="spn4_wt" ~ 0))
+
+stat.test_BH_plus_10000 <- stat.test_BH %>%
+  mutate(compare = case_when(group1=="spn4_plus" & group2=="spn4_minus" ~  10000,
+                           group1=="spn4_minus" & group2=="spn4_wt" ~ 5000,
+                           group1=="spn4_plus" & group2=="spn4_wt" ~ 0))
+
+head(stat.test_BH_plus_1000)
+
+```
+
+
+## Figure S5: Plot all lineplots - all three genotypes + p-values
+
+Print the lineplots of all the the smFISH/smiFISH data. BH-adjusted, Welch approximated t-test adj-p-values will also be printed on top of the lineplots. Because it was difficult to color these stats, I will print a very different versions.
+
+These will be used in Supplemental Figure 5
+
+In each case...
+
+  - spn-4 minus v. spn-4 plus will be on TOP, 
+  - spn-4 minus versus N2 will be in the MIDDLE and
+  - spn4-plus v. N2 will be on the BOTTOM.
+
+```{r savePlots1, echo = FALSE, warning = FALSE, message = FALSE}
+
+plotx <- ggplot(allmRNAs_quantTable, aes(x=cell_stage, y=mean, group=spn4, color=spn4, shape = spn4)) + 
+  geom_ribbon(aes(ymin=(mean-sd), ymax=(mean+sd), fill = spn4), alpha=0.1, linetype = 0) +
+  facet_wrap(.~transcript,scales='free') +
+  labs(x = "Cell Stage", y = "Total mRNA molecules") +
+  geom_line() + geom_point() +
+  theme_linedraw() +
+  scale_fill_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_plus" = "#56B4E9", 
+                               "spn4_wt" = "#000000"))+
+    scale_color_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_plus" = "#56B4E9", 
+                               "spn4_wt" = "#000000"))+
+  stat_pvalue_manual(stat.test_BH_plus_1000, x = "cell_stage", y.position = "compare", hide.ns = FALSE, label = "p.adj.signif", remove.bracket = TRUE) +
+  theme(strip.text = element_text(face = "italic"), 
+        panel.grid.major = element_line(colour = "grey"), 
+        axis.text.x = element_text(angle=45, hjust = 1))
+
+plotx
+
+# Save plot BH and stats (0 - 1000)
+setwd(mywd)
+today <- format(Sys.Date(), "%y%m%d")
+filename2 <- paste("03_plots/", today, "_smiFISH_lineplots_3strains_BH_1000.pdf", sep = "")
+pdf(filename2, width = 10, height = 12)
+
+plotx
+
+dev.off()
+
+# BH and stats (0 - 10000)
+setwd(mywd)
+getwd()
+today <- format(Sys.Date(), "%y%m%d")
+filename2 <- paste("03_plots/", today, "_smiFISH_lineplots_3strains_BH_10000.pdf", sep = "")
+pdf(filename2, width = 10, height = 12)
+
+ggplot(allmRNAs_quantTable, aes(x=cell_stage, y=mean, group=spn4, color=spn4, shape = spn4)) + 
+  geom_ribbon(aes(ymin=(mean-sd), ymax=(mean+sd), fill = spn4), alpha=0.1, linetype = 0) +
+  facet_wrap(.~transcript,scales='free') +
+  labs(x = "Cell Stage", y = "Total mRNA molecules") +
+  geom_line() + geom_point() +
+  theme_linedraw() +
+  scale_fill_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_plus" = "#56B4E9", 
+                               "spn4_wt" = "#000000"))+
+  scale_color_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_plus" = "#56B4E9", 
+                               "spn4_wt" = "#000000"))+
+  stat_pvalue_manual(stat.test_BH_plus_10000, x = "cell_stage", y.position = "compare", hide.ns = FALSE, label = "p.adj.signif", remove.bracket = TRUE) +
+  theme(strip.text = element_text(face = "italic"), 
+        panel.grid.major = element_line(colour = "grey"), 
+        axis.text.x = element_text(angle=45, hjust = 1))
+
+dev.off()
+
+# BH and No Stats
+setwd(mywd)
+getwd()
+today <- format(Sys.Date(), "%y%m%d")
+filename2 <- paste("03_plots/", today, "_smiFISH_lineplots_3strains_BH_noStats.pdf", sep = "")
+pdf(filename2, width = 10, height = 12)
+
+ggplot(allmRNAs_quantTable, aes(x=cell_stage, y=mean, group=spn4, color=spn4, shape = spn4)) + 
+  geom_ribbon(aes(ymin=(mean-sd), ymax=(mean+sd), fill = spn4), alpha=0.1, linetype = 0) +
+  facet_wrap(.~transcript,scales='free') +
+  labs(x = "Cell Stage", y = "Total mRNA molecules") +
+  geom_line() + geom_point() +
+  theme_linedraw() +
+  scale_fill_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_plus" = "#56B4E9", 
+                               "spn4_wt" = "#000000"))+
+    scale_color_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_plus" = "#56B4E9", 
+                               "spn4_wt" = "#000000"))+
+  theme(strip.text = element_text(face = "italic"), 
+        panel.grid.major = element_line(colour = "grey"), 
+        axis.text.x = element_text(angle=45, hjust = 1))
+
+dev.off()
+
+```
+
+## Figure 3: Plot lineplots of select transcripts with just two genotypes
+
+This plot will be for Figure 3. It will just focus on few of the transcripts and will restrict the lineplots to spn-4 minus and spn-4 wild type.
+
+```{r savePlots2, echo = TRUE, warning = FALSE, message = FALSE}
+
+# Subset the transcripts - lin-41, chs-1, cpg-2, oma-2, mcm-2, and nasp-2
+allmRNAs_quantTable_fig3 <- allmRNAs_quantTable %>%
+  filter(transcript == "lin-41" | transcript == "chs-1" | transcript == "cpg-2" |  transcript == "oma-2" | transcript == "mcm-2" | transcript == "nasp-2" ) %>%
+  filter(spn4 == "spn4_minus" | spn4 == "spn4_wt" )
+
+# Set the order for the transcripts
+unique(allmRNAs_quantTable_fig3$transcript)
+allmRNAs_quantTable_fig3$transcript <- factor(allmRNAs_quantTable_fig3$transcript, levels = c("lin-41", "chs-1", "cpg-2", "oma-2", "mcm-2", "nasp-2"))
+
+# Filter the statistics
+stat_test_BH_fig3 <- stat.test_BH %>%
+  filter(transcript == "lin-41" | transcript == "chs-1" | transcript == "cpg-2" |  transcript == "oma-2" | transcript == "mcm-2" | transcript == "nasp-2" )
+
+# Add where the p-adj statistics will be placed on the plot 
+stat.test_BH_plus_5 <- stat_test_BH_fig3 %>%
+  mutate(compare = case_when(group1=="spn4_plus" & group2=="spn4_minus" ~  5,
+                           group1=="spn4_minus" & group2=="spn4_wt" ~ 2.5,
+                           group1=="spn4_plus" & group2=="spn4_wt" ~ 0.1))
+
+ploty <- ggplot(allmRNAs_quantTable_fig3, aes(x=cell_stage, y=mean/1000, group=spn4, color=spn4, shape = spn4)) + 
+  geom_ribbon(aes(ymin=(mean-sd)/1000, ymax=(mean+sd)/1000, fill = spn4), alpha=0.1, linetype = 0) +
+  facet_wrap(.~transcript,scales='free') +
+  labs(x = "Cell Stage", y = "Total mRNA molecules") +
+  geom_line() + geom_point() +
+  theme_linedraw() +
+  ylim(0, 28) +
+  scale_fill_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_wt" = "#000000"))+
+    scale_color_manual(values = c("spn4_minus" = "#E69F00", 
+                               "spn4_wt" = "#000000"))+
+  stat_pvalue_manual(stat.test_BH_plus_5, x = "cell_stage", y.position = "compare", hide.ns = FALSE, label = "p.adj.signif", remove.bracket = TRUE) +
+  theme(strip.text = element_text(face = "italic"), 
+        panel.grid.major = element_line(colour = "grey"), 
+        axis.text.x = element_text(angle=45, hjust = 1))
+
+ploty
+
+# Plot for Figure 3  - 
+# BH and Stats
+setwd(mywd)
+today <- format(Sys.Date(), "%y%m%d")
+filename2 <- paste("03_plots/", today, "_smiFISH_lineplots_2-strains_BH_stats.pdf", sep = "")
+pdf(filename2, width = 6, height = 6)
+
+ploty
+
+dev.off()
+
+```
+
+# Figure F3E: Calculate and plot the 4-cell difference values
+
+I tested what would be the best metric of spn-4's impact on mRNA abundance. I tested
+
+  * log2 fold change differences at the 4-cell stage between SPN-4 minus / SPN-4 wt
+  * log2 fold change differences at teh 8 to 11-cell stages between SPN-4 minus / SPN-4 wt
+  * Area Under the Curve of the difference curves between SPN-4 minus v. SPN-4 wt
+  
+They all looked very similar. We settled on the 4-cell stage as this was the most relevant to our early stage interest 
+
+```{r 4cell_test, echo = TRUE, warning = FALSE, message = FALSE} 
+
+# Calculate the log2 fold change difference between spn-4 minus and spn-4 wild type at the 4-cell stage
+Fourcell_foldChange <- allmRNAs_quantTable %>%
+  filter(cell_stage == "4-cell") %>%
+  select(transcript, cell_stage, spn4, mean) %>%
+  group_by(transcript) %>%
+  pivot_wider(names_from = spn4, values_from = mean)%>%
+  mutate(spn4_difference_4cell = log(spn4_minus/spn4_wt, base = 2)) %>%
+  arrange(desc(spn4_difference_4cell))
+
+# Get data from 250226 Plotting Tatsuya Data
+setwd(mywd)
+filtered_SPN4 <- read.table(file = "01_input/20250829_smFISH_assayed_transcripts.txt", header = TRUE)
+colnames(filtered_SPN4)[2] <- "transcript"
+
+# Merge assayed Genes data frame (RIP-seq) and fold change data frame (smFISH)
+joined_filtered <- left_join(Fourcell_foldChange, filtered_SPN4)
+
+# Order by descending 
+joined_filtered <- joined_filtered %>%
+  arrange(desc(SPN4), desc(spn4_enrichment))
+
+# Save transcript as a rowname
+joined_filtered <- as.data.frame(joined_filtered)
+rownames(joined_filtered) <- joined_filtered$transcript
+
+## Subset for the RBP states
+#joined_filtered[,11:13]
+#joined_filtered[,20]
+joined_filtered_rpm <- joined_filtered[,c(11:13,20)]
+
+# Create an expression mean data frame (for annotations)
+joined_filtered_df_mean <- as.data.frame(joined_filtered[,20])
+rownames(joined_filtered_df_mean) <- joined_filtered$transcript
+
+# Plot a heatmap of the IP-seq enrichment values for all three RBPs
+v <- pheatmap(joined_filtered_rpm[,c(3,2,1)], 
+              scale="none", 
+              color = colorRampPalette(c("blue4", "beige", "maroon2"), space = "Lab")(1000),
+              cluster_rows=FALSE, 
+              cluster_cols=FALSE, 
+              border_color = "white", 
+              show_rownames = TRUE,
+              annotation_row = joined_filtered_df_mean
+)
+
+v
+
+# Save plots
+# Save the heatmap plot illustrating SPN-4 enrichment:
+setwd(mywd)
+getwd()
+today <- format(Sys.Date(),"%Y%m%d")
+file6 <- paste("03_plots/", today, "_heatmap_smFISH_selecteGenes_orderedBySPN4.pdf", sep = "")
+
+pdf(file6, height = 9, width = 6)
+v
+dev.off()
+
+
+# Heatmap plot of expression level
+w <- pheatmap(joined_filtered$mean, 
+              scale="none", 
+              color = colorRampPalette(c("darkgreen", "white", "orange"), space = "Lab")(100),
+              cluster_rows=FALSE, 
+              cluster_cols=FALSE, 
+              border_color = "white",
+              show_rownames=TRUE)
+
+w
+
+# Save the plot 
+today <- format(Sys.Date(),"%Y%m%d")
+file7 <- paste("03_plots/", today, "_heatmap_expression_ordered_bySPN4_cat.pdf", sep = "")
+
+pdf(file7, height = 9, width = 6)
+w
+dev.off()
+
+# Save Barplot of 4-cell stage fold change...
+barplot(joined_filtered$spn4_difference_4cell, names.arg = joined_filtered$transcript, 
+        las = 2, 
+        xlab = "transcript", 
+        ylab = "Fold change at 4-cell")
+
+today <- format(Sys.Date(),"%Y%m%d")
+today
+file8 <- paste("03_plots/", today, "_4-cell_difference_ordered_bySPN4_cat.pdf", sep = "")
+pdf(file8, height = 9, width = 6)
+barplot(joined_filtered$spn4_difference_4cell, names.arg = joined_filtered$transcript, 
+        las = 2, 
+        xlab = "transcript", 
+        ylab = "Fold change at 4-cell")
+dev.off()
+
+```
+
+# Export supplemental data
+
+```{r export_supp, echo = TRUE, warning = FALSE}
+
+setwd(mywd)
+file10 <- paste("04_supplemental_data/", today, "_adj_pvalues_w_and_wo_spn4.txt", sep = "")
+write.table(as.data.frame(stat.test_BH_plus_1000[ ,c(1:12)]), file = file10, sep = "\t", row.names = FALSE, quote = FALSE)
+
+file11 <- paste("04_supplemental_data/", today, "_means_and_sd_totalRNAs_w_and_wo_spn4.txt", sep = "")
+write.table(allmRNAs_quantTable, file = file11, sep = "\t", row.names = FALSE, quote = FALSE)
+
+```
+
+# Capture session and version info
+
+```{r session, echo = TRUE}
+
+setwd(mywd)
+file12 <- paste("04_supplemental_data/", today, "_sessionInfo.txt", sep = "")
+writeLines(capture.output(sessionInfo()), file12)
+```
