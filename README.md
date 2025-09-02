@@ -13,4 +13,6 @@ This repository accompanies the manuscript "The RNA-Binding Protein SPN-4 coordi
 
 ## 06 3'UTR bashing analysis
 
+## 08 mRNA total counts in spn-4 null mutants
+
 ## 07 in vitro binding assays
