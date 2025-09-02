@@ -200,10 +200,10 @@ SPN4_widematrix3 <- as.matrix(SPN4_widematrix2)
 head(SPN4_widematrix3)
 
 # Trim and create a matrix:
-SPN4_widematrix2 <- SPN4_wide_2cutoff_2FPKM[,6:8]
-SPN4_widematrix2
-SPN4_widematrix3 <- as.matrix(SPN4_widematrix2)
-head(SPN4_widematrix3)
+#SPN4_widematrix2 <- SPN4_wide_2cutoff_2FPKM[,6:8]
+#SPN4_widematrix2
+#SPN4_widematrix3 <- as.matrix(SPN4_widematrix2)
+#head(SPN4_widematrix3)
 
 # Calculate the distances between each sample
 sampleDists <- dist(t(SPN4_widematrix3)) 
@@ -551,80 +551,13 @@ filtered_SPN4 <- unfiltered_SPN4data %>%
   filter(unfiltered_SPN4data$name %in% assayedGenes)
 
 filtered_SPN4
+today <- format(Sys.Date(), "%Y%m%d" )
+today
+str(AllGenes_SPN4)
+AllGenes_SPN4
+write.table(AllGenes_SPN4, file = paste("04_output_data/", today, "_smFISH_assayed_transcripts.txt", sep = ""), sep = "\t", quote = FALSE)
+help(write.table)
 
-# Input smFISH Fold Change data. It should be in the input folder
-getwd()
-smFISHFoldChange <- read.table(file = "01_input/240618_smFISH_foldChangeData.txt", header = TRUE) 
-smFISHFoldChange
-
-
-# Merge assayed Genes data frame (RIP-seq) and fold change data frame (smFISH)
-joined_filtered_matrix1 <- left_join(smFISHFoldChange, filtered_SPN4, by = c("transcript" = "name"))
-joined_filtered_matrix1 <- unique(joined_filtered_matrix1)
-
-# Double Check the ordering is correct
-joined_filtered_matrix1 <- joined_filtered_matrix1 %>%
-  arrange(desc(foldChange))
-
-# Save transcript as a rowname
-rownames(joined_filtered_matrix1) <- joined_filtered_matrix1$transcript
-joined_filtered_matrix1
-# Subset
-joined_filtered_matrix2 <- joined_filtered_matrix1[,7:9]
-joined_filtered_matrix2
-
-v <- pheatmap(joined_filtered_matrix2[,c(3,2,1)], 
-              scale="none", 
-              color = colorRampPalette(c("blue4", "white", "maroon2"), space = "Lab")(100),
-              cluster_rows=FALSE, 
-              cluster_cols=FALSE, 
-              clustering_distance_rows = "euclidean", 
-              clustering_method = "complete",
-              border_color = "white", 
-              show_rownames = TRUE)
-
-v
-
-# Save the plot:
-today <- format(Sys.Date(),"%Y%m%d")
-file6 <- paste("03_figures/", today, "_heatmap_smFISH_selecteGenes.pdf", sep = "")
-
-pdf(file6, height = 9, width = 6)
-v
-dev.off()
-
-########## Fold CHange V. SPN Enrich V. Express. Level #######
-
-## Figure 3
-
-#Heatmap of key assayed genes plotted to include the expression level as well as their expression levels as this seems to make a difference
-
-# Subset
-joined_filtered_matrix2 <- joined_filtered_matrix1 %>%
-  arrange(desc(foldChange))
-
-str(joined_filtered_matrix2)
-
-w <- pheatmap(joined_filtered_matrix2[,c(10)], 
-              scale="none", 
-              color = colorRampPalette(c("darkgreen", "white", "orange"), space = "Lab")(100),
-              cluster_rows=FALSE, 
-              cluster_cols=FALSE, 
-              clustering_distance_rows = "euclidean", 
-              clustering_method = "complete",
-              border_color = "white", 
-              show_rownames=TRUE)
-
-w
-help(pheatmap)
-
-# Save the plot 
-today <- format(Sys.Date(),"%Y%m%d")
-file7 <- paste("03_figures/", today, "_heatmap_smFISH_over2lysate_PlusExp.pdf", sep = "")
-
-pdf(file7, height = 9, width = 6)
-w
-dev.off()
 
 ######### Compare this dataset to the Tsukamoto et al., Genetics 2017 LIN-41 and OMA-1 IP + RNAseq dataset ###########
 
@@ -720,9 +653,6 @@ dev.off()
 
 today <- format(Sys.Date(),"%Y%m%d")
 file8 <- paste("04_output_data/", today, "_sessionInfo.txt", sep = "")
-
-
-
 
 writeLines(capture.output(sessionInfo()), file8)
 

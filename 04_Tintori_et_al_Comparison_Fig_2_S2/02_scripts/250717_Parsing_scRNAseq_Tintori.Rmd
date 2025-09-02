@@ -439,7 +439,67 @@ dev.off()
 
 ```
 
+----
 
+## Quick experimentation into a different ordering of the cells 
+
+```{r lineplot_testing, echo = TRUE, message = FALSE, warning = FALSE}
+
+meanbycluster
+
+bestOrder <- c(23, 1, 24, 2, 7, 17, 25, 3, 5, 8, 10, 12, 16, 20, 26, 4, 6, 9, 11, 13, 14, 15, 18, 19, 21, 22, 27)
+
+length(colnames(meanbycluster))
+testOrder <- c(1, 2, 4, 8, 16, 28, 3, 5, 6, 9, 10, 11, 12, 17, 18, 19, 20, 7, 14, 24, 25, 15, 26, 27, 13, 21, 22, 23)
+
+colnames(meanbycluster)
+colnames(meanbycluster)[testOrder]
+length(colnames(meanbycluster))
+length(testOrder)
+# Do I have 27 cell types?
+#length(bestOrder)
+#length(unique(bestOrder))
+#dim(cellType_sorted)[1]
+
+# re-arrange changing_wide_mat columns by the best order 
+meanbycluster_reordered <- meanbycluster[ , testOrder]
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+longer_means_by_cluster_reordered <- pivot_longer(meanbycluster_reordered, cols = 2:28, names_to ="cell",
+             values_to = "intensity")
+
+# Set cell ID as an ordered factor
+longer_means_by_cluster_reordered$cell <- factor(longer_means_by_cluster_reordered$cell, levels = colnames(meanbycluster)[testOrder])
+
+colnames(changing_wide_mat)
+
+longer_means_by_cluster_reordered$cluster <- factor(longer_means_by_cluster_reordered$cluster, levels = c(1,4,3,5,2))
+
+longer_means_by_cluster_reordered
+# create lineplots of the trend over cell type for each cluster
+vcolors = plasma(7)[1:5]
+#vcolors
+lineplot_clusters2 <- ggplot(longer_means_by_cluster_reordered, aes(x=cell, y=intensity, group=cluster, colour=cluster)) + 
+  geom_line()+
+  geom_point() +
+  scale_color_manual(values = vcolors) +
+  facet_grid(rows = vars(cluster))
+
+lineplot_clusters2
+
+setwd(mywd)
+
+today <- format(Sys.Date(), "%y%m%d")
+filename2 <- paste("03_output/", today, "_cluster_lineplots_test_new_order.pdf", sep = "")
+pdf(filename2, width = 6, height = 6)
+
+lineplot_clusters2
+
+dev.off()
+
+
+
+```
 ### import the gene lists of SPN-4, OMA-1, and LIN-41 targets
 
 The next goal will be to assess which clusters contain SPN-4, OMA-1, and LIN-41 associated mRNAs and to what degree. The predition is that if SPN-4 is associated with mRNA decay, then the clusters that are driven by decay of maternal mRNAs will have a higher propensity of SPN-4 associated mRNAs.
@@ -619,15 +679,15 @@ vcolors = plasma(7)[1:5]
 #vcolors[1]
 
 # Barplot 
-bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, xlim = c(0, 20),
-        names.arg = c("Cluster 1", "Cluster 4", "Cluster 3", "Cluster 5", "Cluster 2"),
+bp1 <- barplot(rev(SPN4_Percentage_plot$SPN_percent), xlim = c(0, 20),
+        names.arg = rev(SPN4_Percentage_plot$cluster_set),
         xlab = "Cluster Set", 
         ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
-        col = vcolors, 
+        col = rev(vcolors), 
         horiz = TRUE,
         las = 1)
 # Add text
-text(x = SPN4_Percentage_plot$SPN_percent + 2, y = bp1, labels = textSPN)
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = rev(bp1), labels = textSPN)
 
 ```
 
@@ -645,15 +705,17 @@ filename4 <- paste("03_output/", today, "_SPN4_percentage_barplot.pdf", sep = ""
 setwd(mywd)
 pdf(filename4, width = 5, height = 5)
 
-bp1 <- barplot(SPN4_Percentage_plot$SPN_percent, xlim = c(0, 20),
-        names.arg = c("Cluster 1", "Cluster 4", "Cluster 3", "Cluster 5", "Cluster 2"),
+bp1 <- barplot(rev(SPN4_Percentage_plot$SPN_percent), xlim = c(0, 20),
+        names.arg = rev(SPN4_Percentage_plot$cluster_set),
         xlab = "Cluster Set", 
         ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
-        col = vcolors, 
+        col = rev(vcolors), 
         horiz = TRUE,
         las = 1)
+
+help(barplot)
 # Add text
-text(x = SPN4_Percentage_plot$SPN_percent + 2, y = bp1, labels = textSPN)
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = rev(bp1), labels = textSPN)
 
 dev.off()
 
@@ -719,7 +781,7 @@ longer_means_by_IP <- pivot_longer(mean_by_IP, cols = 2:28, names_to = "cell",
 
 # Set cell ID as an ordered factor
 longer_means_by_IP$cell <- factor(longer_means_by_IP$cell, levels = colnames(changing_wide_mat))
-
+longer_means_by_IP
 # create lineplots of the trend over cell type for each cluster
 lineplot_IP <- ggplot(longer_means_by_IP, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
   geom_line()+
@@ -747,6 +809,55 @@ dev.off()
 
 ```
 
+
+---- 
+
+## Playing around with a different cell order
+
+
+```{r testing_lineplot_newOrder }
+
+clustered_changing_wide_df
+clustered_changing_wide_ann2
+mean_by_IP
+
+testOrder
+
+
+dim(mean_by_IP)
+colnames(mean_by_IP)[testOrder]
+
+mean_by_IP[testOrder]
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+longer_means_by_IP_2 <- pivot_longer(mean_by_IP[testOrder], cols = 2:28, names_to = "cell",
+                                        values_to = "intensity")
+
+# Set cell ID as an ordered factor
+longer_means_by_IP_2$cell <- factor(longer_means_by_IP_2$cell, levels = colnames(mean_by_IP)[testOrder])
+
+# Set colors
+vcolors = plasma(7)[1:5]
+
+# create lineplots of the trend over cell type for each cluster
+lineplot_IP_2 <- ggplot(longer_means_by_IP_2, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
+  geom_line()+
+  geom_point() +
+  facet_grid(rows = vars(IP))
+
+lineplot_IP_2
+
+setwd(mywd)
+
+today <- format(Sys.Date(), "%y%m%d")
+filename5 <- paste("03_output/", today, "_IP_lineplots_new_order.pdf", sep = "")
+pdf(filename5, width = 6, height = 6)
+
+lineplot_IP_2
+
+dev.off()
+
+```
 ## Session info
 
 ```{r}
