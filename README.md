@@ -5,14 +5,14 @@ This repository accompanies the manuscript "The RNA-Binding Protein SPN-4 coordi
 
 ## 02 SPN-4, LIN-41, and OMA-1 RNA cohort comparisons 
 
-## [03 GO Ontology - report](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
+## [03 GO Ontology - functional categories of mRNA associated with SPN-4, OMA-1, or LIN-41]](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
 
-## [04 Comparison with single-cell sequencing - report](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts/250717_Parsing_scRNAseq_Tintori.md)
+## [04 How SPN-4 associated mRNAs behave in a single-cell sequencing dataset - report](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts/250717_Parsing_scRNAseq_Tintori.md)
 
 ## 05 spn-4 mutant smFISH analysis
 
 ## 06 3'UTR bashing analysis
 
-## 08 mRNA total counts in spn-4 null mutants
+## [08 mRNA total counts in spn-4 null mutants]{https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/08_spn4_null/02_scripts/250902_plot_analyze_spn4_datasets.md}
 
 ## 07 in vitro binding assays
