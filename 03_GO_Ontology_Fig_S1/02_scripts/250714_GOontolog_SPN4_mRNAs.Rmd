@@ -72,6 +72,7 @@ Present_list2 <- sort(Present_list$V1, decreasing = TRUE)
 
 # merge datasets into a list of vectors:
 RBP_list_of_vectors <- list(SPN4 = SPN4_list2, OMA1 = OMA1_list2, LIN41 = LIN41_list2)
+str(RBP_list_of_vectors)
 ```
 
 ## Biological Processes 

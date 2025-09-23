@@ -209,6 +209,8 @@ head(SPN4_widematrix3)
 sampleDists <- dist(t(SPN4_widematrix3)) 
 sampleDists
 
+help(dist)
+
 sampleDistMatrix <- as.matrix(sampleDists) #convert from data.frame -> matrix
 rownames(sampleDistMatrix) <- colnames(SPN4_widematrix3) # Add some labels
 colnames(sampleDistMatrix) <- NULL
@@ -250,7 +252,6 @@ SPN4_wide_stringentCutoff1 <- cbind(AllGenes_SPN4, stdev =  apply(AllGenes_SPN4[
 colnames(SPN4_wide_stringentCutoff1)
 head(SPN4_wide_stringentCutoff1)
 summary(SPN4_wide_stringentCutoff1$stdev)
-SPN4_wide_stringentCutoff1
 
 # Make the cutoffs
 ## Select for enrichments over -2 and more than Log2(2)
@@ -261,6 +262,7 @@ SPN4_wide_stringentCutoff2 <- SPN4_wide_stringentCutoff1 %>%
   filter(Log2_SPN.4_LYSATE_FPKM > 4) %>%
   filter(stdev > 0.6)
 
+dim(SPN4_wide_stringentCutoff2)
 
 # Full heatmap of high-ish expression genes:
 dim(SPN4_wide_stringentCutoff2)

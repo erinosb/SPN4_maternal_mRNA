@@ -689,6 +689,18 @@ bp1 <- barplot(rev(SPN4_Percentage_plot$SPN_percent), xlim = c(0, 20),
 # Add text
 text(x = SPN4_Percentage_plot$SPN_percent + 2, y = rev(bp1), labels = textSPN)
 
+# Calculate the combined percentage of SPN-4 in Cluster 3 and Cluster 5 - 
+
+# tabulate the total number of SPN-4 associated genes per cluster and the total number of genes per cluster  
+SPN4_Percentage_plot_2 <- tabs_dataframe |>
+  pivot_wider(names_from = IP, values_from = Freq) |>
+  rowwise(cluster_set) |>
+  mutate(SPN_tot = sum(c(`SPN-4`, `OMA-1_SPN-4`, `LIN-41_SPN-4`, `OMA-1_SPN-4_LIN-41`))) |>
+  mutate(all_tot = sum(c(`OMA-1`, `SPN-4`, `LIN-41`, `OMA-1_LIN-41`, `OMA-1_SPN-4`, `LIN-41_SPN-4`, `OMA-1_SPN-4_LIN-41`, `none`)))
+
+# calculate the percentage of SPN-4 genes in Cluster 3 and 5
+(SPN4_Percentage_plot_2$SPN_tot[3] + SPN4_Percentage_plot_2$SPN_tot[4]) / (SPN4_Percentage_plot_2$all_tot[3] + SPN4_Percentage_plot_2$all_tot[4] )*100
+
 ```
 
 ### Save the barplot (% SPN-4 associated mRNAs in each clusteer)
