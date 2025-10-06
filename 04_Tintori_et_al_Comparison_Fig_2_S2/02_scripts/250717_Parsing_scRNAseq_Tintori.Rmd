@@ -419,6 +419,8 @@ lineplot_clusters <- ggplot(longer_means_by_cluster, aes(x=cell, y=intensity, gr
 
 lineplot_clusters
 
+
+
 ```
 
 ### Save lineplot split by clusters
@@ -681,8 +683,8 @@ vcolors = plasma(7)[1:5]
 # Barplot 
 bp1 <- barplot(rev(SPN4_Percentage_plot$SPN_percent), xlim = c(0, 20),
         names.arg = rev(SPN4_Percentage_plot$cluster_set),
-        xlab = "Cluster Set", 
-        ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
+        ylab = "Cluster Set", 
+        xlab = "Percentage of SPN-4 associated mRNAs in cluster", 
         col = rev(vcolors), 
         horiz = TRUE,
         las = 1)
@@ -700,6 +702,105 @@ SPN4_Percentage_plot_2 <- tabs_dataframe |>
 
 # calculate the percentage of SPN-4 genes in Cluster 3 and 5
 (SPN4_Percentage_plot_2$SPN_tot[3] + SPN4_Percentage_plot_2$SPN_tot[4]) / (SPN4_Percentage_plot_2$all_tot[3] + SPN4_Percentage_plot_2$all_tot[4] )*100
+
+
+######## FPKM taken into account ###########
+# Calculate the percentage of SPN-4 associated transcripts in Cluster 3 and 5 as a percentage of the total mRNA content in the embryo at the time...
+
+ann4 <- cbind(ann, changing_wide_df_plusIP$IP, changing_wide_df_plusIP$P0)
+colnames(ann4) <- c("cluster_set", "IP", "P0_fpkm")
+
+
+# Calculate total fpkm for Cluster 3
+ann4_cluster3 <- ann4 %>%
+  filter ( cluster_set == 3)
+dim(ann4_cluster3)
+
+ann4_cluster3_spn4 <- ann4 %>%
+  filter ( cluster_set == 3) %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4")
+dim(ann4_cluster3_spn4)
+
+156/2463
+
+# calculate percentage of total molecules: 
+percent_cluster3_adj_fpkm <- (sum(ann4_cluster3_spn4$P0_fpkm) / sum(ann4_cluster3$P0_fpkm)) *100
+
+####################################
+# Calculate total fpkm for Cluster 5
+ann4_cluster5 <- ann4 %>%
+  filter ( cluster_set == 5)
+dim(ann4)
+dim(ann4_cluster5)
+
+
+ann4_cluster5_spn4 <- ann4 %>%
+  filter ( cluster_set == 5) %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4")
+dim(ann4_cluster5_spn4)
+
+132/1144
+
+# calculate percentage of total molecules: 
+percent_cluster3_adj_fpkm <- (sum(ann4_cluster5_spn4$P0_fpkm) / sum(ann4_cluster5$P0_fpkm) ) * 100
+
+ann4_fpkm_sum <- ann4 %>%
+  group_by(cluster_set) %>%
+  summarise(tot_sum = sum(P0_fpkm))
+  
+ann4_fpkm_spn4_sum <- ann4 %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4") %>%
+  group_by(cluster_set) %>%
+  summarise(spn4_sum = sum(P0_fpkm)) 
+
+ann4_fpkm_sum
+ann4_fpkm_spn4_sum
+
+merge_fpkm_adj_values <- left_join(ann4_fpkm_sum, ann4_fpkm_spn4_sum)
+
+merge_fpkm_adj_values
+merge_fpkm_adj_values <- merge_fpkm_adj_values %>%
+  mutate(percent = (spn4_sum / tot_sum )*100)
+
+
+
+bp2 <- barplot(rev(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent),
+        xlim = c(0,20),
+        names.arg = rev(c("1", "4", "3", "5", "2")),
+        ylab = "Cluster Set", 
+        xlab = "Percentage of SPN-4 associated mRNAs in cluster", 
+        col = rev(vcolors), 
+        horiz = TRUE,
+        las = 1)
+               
+
+# Add text
+textSPN <- paste(round(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent, 2), " %", sep = "")
+textSPN
+text(x = merge_fpkm_adj_values[c(1,4,3,5,2),]$percent + 2, y = rev(bp2), labels = textSPN[c(1,4,3,5,2)])
+rev(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent)
+
+####################################
+# Calculate total fpkm for both Cluster 3 & Cluster 5
+
+# Calculate total fpkm for Cluster 5
+ann4_cluster35 <- ann4 %>%
+  filter ( cluster_set == 5 | cluster_set == 3)
+dim(ann4)
+dim(ann4_cluster35)
+
+
+ann4_cluster35_spn4 <- ann4_cluster35 %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4")
+dim(ann4_cluster35_spn4)
+
+288/3607
+
+# calculate percentage of total molecules: 
+(sum(ann4_cluster35_spn4$P0_fpkm) / sum(ann4_cluster35$P0_fpkm) ) * 100
+
+
+
 
 ```
 
@@ -724,12 +825,41 @@ bp1 <- barplot(rev(SPN4_Percentage_plot$SPN_percent), xlim = c(0, 20),
         col = rev(vcolors), 
         horiz = TRUE,
         las = 1)
+               
 
 help(barplot)
 # Add text
 text(x = SPN4_Percentage_plot$SPN_percent + 2, y = rev(bp1), labels = textSPN)
 
 dev.off()
+
+#### Also save a barplot with the fpkm adjusted percentages:
+
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("03_output/", today, "_SPN4_percentage_barplot_fpkmAdj.pdf", sep = "")
+
+#--> Note: this didn't look right. Had to save with Export -> Save As PDF
+
+setwd(mywd)
+pdf(filename4, width = 5, height = 5)
+
+bp2 <- barplot(rev(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent),
+        xlim = c(0,20),
+        names.arg = rev(c("1", "4", "3", "5", "2")),
+        ylab = "Cluster Set", 
+        xlab = "Percentage of total mRNA molecules in cluster that are SPN-4 associated (fpkm-adjusted)", 
+        col = rev(vcolors), 
+        horiz = TRUE,
+        las = 1)
+
+
+# Add text
+textSPN <- paste(round(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent, 2), " %", sep = "")
+
+text(x = merge_fpkm_adj_values[c(1,4,3,5,2),]$percent + 2, y = rev(bp2), labels = rev(textSPN[c(1,4,3,5,2)]))
+
+dev.off()
+
 
 ```
 
