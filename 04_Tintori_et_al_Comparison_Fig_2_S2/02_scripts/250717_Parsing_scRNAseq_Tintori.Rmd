@@ -43,7 +43,7 @@ Set Working Directory:
 
 ```{r wd, echo = FALSE, warning = FALSE, message = FALSE}
 
-mywd <- "~/Library/CloudStorage/Dropbox/github/SPN4_maternal_mRNA/04_Tintori_et_al_Comparison_Fig_2_S2"
+mywd <- "<SET-USER-WORKING-DIR-HERE>"
 ```
 
 
