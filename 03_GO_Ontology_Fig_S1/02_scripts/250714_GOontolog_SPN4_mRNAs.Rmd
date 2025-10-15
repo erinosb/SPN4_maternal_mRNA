@@ -54,7 +54,7 @@ These datasets are lists that were generated in a previous analysis located in 0
 ```{r import, echo=TRUE, warning = FALSE, message = FALSE}
 
 # set wd:
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+setwd("<SET-USER-DIRECTORY-HERE>")
 getwd()
 
 # import the data files
