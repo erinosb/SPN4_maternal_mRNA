@@ -38,7 +38,7 @@ These quantifications generated from smFISH and smiFISH microscopy images perfor
 
 ```{r import, echo = TRUE, warning = FALSE}
 # import the data files
-mywd <- "~/Library/CloudStorage/Dropbox/github/SPN4_maternal_mRNA/08_spn4_null"
+mywd <- "<SET-USER-WORKING-DIR-HERE>"
 setwd(mywd)
 all_spn4_dataset <- read.table(file = "01_input/all_spn4_smiFISH_quantification_250902.csv", header = TRUE, sep = ",")
 
