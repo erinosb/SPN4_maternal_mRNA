@@ -29,7 +29,7 @@ df <- read.csv(input_path, stringsAsFactors = FALSE)
 # Check data
 #head(df)
 #str(df)
-knitr::kable(df)
+# knitr::kable(df)
 ```
 
 ### 2. Plot total mRNA abundance per strain
@@ -196,7 +196,7 @@ output_path <- "../03_output/Fig4_lin-41-3UTR-bashing_tukey_posthoc_results.csv"
 write.csv(tukey_df, file = output_path, row.names = FALSE)
 
 
-knitr::kable(tukey_df)
+# knitr::kable(tukey_df)
 ```
 
 The ANOVA results indicate that there are significant differences among the subdirectories (p < 0.001). The Tukey's post hoc results show these differences:
@@ -246,7 +246,8 @@ if (kruskal_test_results$p < 0.05) {
 } else {
   cat("No significant differences among groups based on the Kruskal-Wallis test.\n")
 }
-knitr::kable(dunn_df)
+
+# knitr::kable(dunn_df)
 
 ```
 
