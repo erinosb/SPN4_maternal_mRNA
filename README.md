@@ -17,7 +17,7 @@
   *   <sup>3</sup>Department of Biochemistry, University of Colorado Boulder, Boulder, CO 80309, USA
   *   <sup>4</sup>Howard Hughes Medical Institute, University of Colorado Boulder, Boulder, CO 80309, USA
   *   <sup>5</sup>Department of Obstetrics, Gynecology, and Women’s Health, University of Minnesota Medical School, Minneapolis, MN 55455, USA
-  *   * These authors contributed equally to this work
+  *   \* These authors contributed equally to this work
   *   †These authors contributed equally to this work
 
 
