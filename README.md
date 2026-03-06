@@ -32,7 +32,7 @@ Click on the links below to go to each directory:
 
 ### [02 GO Ontology of SPN-4, LIN-41, and OMA-1 associated RNA cohorts](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/02_GO_Ontology)
 
-### [03 Insight from Tintori et al.'s scRNA-seq dataset ](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
+### [03 Insight from Tintori et al.'s scRNA-seq dataset ](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/03_Tintori_scRNAseq_analysis)
 
 ### [04 mRNA abundance of SPN-4 putative target transcripts changes in spn-4 null mutants](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts/250717_Parsing_scRNAseq_Tintori.md)
 
