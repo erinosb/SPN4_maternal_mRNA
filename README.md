@@ -42,7 +42,7 @@ Click on the links below to go to each directory:
 
 ### [07 Double mutant analysis of lin-41 3'UTRs small Fox deletion and spn-4 null mutations](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/07_lin41_smFOX_SPN4_double_mutant)
 
-### 08 Additional studies in the double mutant analysis
+### [08 Additional studies in the double mutant analysis](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/08_lin41_smFOX_SPN4_double_supplemental)
 
 ### 09 chs-1 3'UTR bashing analysis
 
