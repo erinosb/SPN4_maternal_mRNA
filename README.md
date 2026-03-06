@@ -30,7 +30,7 @@ Click on the links below to go to each directory:
 
 ### [01 Comparison of SPN-4, LIN-41, and OMA-1 associated RNA cohorts](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/01_SPN4_LIN41_OMA1_Comparison)
 
-### 02 GO Ontology of SPN-4, LIN-41, and OMA-1 associated RNA cohorts
+### [02 GO Ontology of SPN-4, LIN-41, and OMA-1 associated RNA cohorts](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/02_GO_Ontology)
 
 ### [03 Insight from Tintori et al.'s scRNA-seq dataset ](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
 
