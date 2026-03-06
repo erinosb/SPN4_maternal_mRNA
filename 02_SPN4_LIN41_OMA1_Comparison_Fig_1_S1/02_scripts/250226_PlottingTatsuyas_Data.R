@@ -30,7 +30,7 @@ library(stringr)
 
 # import the counts data
 getwd()
-setwd("~/Library/CloudStorage/Dropbox/github/SPN4_maternal_mRNA/02_SPN4_LIN41_OMA1_Comparison_Fig_1_S1")
+setwd("<INPUT-USER-DIRECTORY-HERE>")
 
 #Import the combined "Enrichment" and "Probe" information. There are some duplicates
 getwd()
