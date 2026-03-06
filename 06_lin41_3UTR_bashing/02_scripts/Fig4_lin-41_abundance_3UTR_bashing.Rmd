@@ -3,8 +3,9 @@ title: "Fig4_lin-41_abundance_3UTR_bashing"
 author: "Naly Torres"
 date: "2025-08-04"
 output:
-  word_document: default
-  html_document: default
+  github_document:
+    toc: true
+    toc_depth: 4
 ---
 
 
