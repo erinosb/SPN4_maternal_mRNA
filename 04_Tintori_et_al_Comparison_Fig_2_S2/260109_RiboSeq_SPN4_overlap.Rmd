@@ -1,0 +1,30 @@
+---
+title: "260109_RiboSeq_SPN4_overlap"
+author: "Erin Osborne Nishimura"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 4
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+
+```{r cars}
+
+library(tidyverse)
+
+```
+
+# Import the Dickinson datasets
+
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

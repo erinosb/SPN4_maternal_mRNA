@@ -1,0 +1,1287 @@
+---
+title: "260106_Parsing_scRNA-seq_Tintori"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 4
+---
+
+# Transcriptional dynamics of SPN-4 associated mRNAs through early embryonic development
+
+This analysis utilizes a single-cell resolution RNA-seq dataset that assesses expression patterns through the first five cell divisions in _C. elegans_ (Tintori et al., 2016). The goal of this study is to test the hypothesis that SPN-4 may be involved in clearing maternal mRNAs out of early embryos. If this is the case, we would expect to see that SPN-4 associated mRNAs are enriched in clusters of maternal transcripts that undergo decline in early embryos. 
+
+Reference:
+
+Tintori SC, Osborne Nishimura E, Golden P, Lieb JD, Goldstein B. [A Transcriptional Lineage of the Early C. elegans Embryo](https://pubmed.ncbi.nlm.nih.gov/27554860). Dev Cell. 2016 Aug 22;38(4):430-44. doi: 10.1016/j.devcel.2016.07.025. PMID: 27554860; PMCID: PMC4999266.
+
+
+## Load Packages
+
+The following packages are required:
+
+  * corrplot
+  * RColorBrewer
+  * pheatmap
+  * tidyverse
+  * hrbrthemes
+  * viridis
+  * vcd
+
+```{r packages, echo = TRUE, warning = FALSE, message = FALSE}
+
+library(corrplot)
+library(RColorBrewer)
+library(pheatmap)
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+library(vcd)
+
+```
+
+Set Working Directory:
+
+```{r wd, echo = FALSE, warning = FALSE, message = FALSE}
+getwd()
+# working directory should be ~/github/SPN4_maternal_mRNA/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts"
+# If not, please use setwd() to align this working directory
+```
+
+
+## Data Import and Munging
+
+### Import Metadata from Tintori et al data
+
+This metadata describes each sample in Tintori et al., 
+
+```{r import1, echo=TRUE, warning = FALSE, message = FALSE}
+
+###########  READ IN THE DATA  #####################
+
+# Import the metadata from Tintori et al.
+metadata_tintori <- read.table(file = "../01_input/fromTintori/metadata_parsed_50306.txt", header = FALSE, fill = TRUE)
+
+# Annotate & Resort the metadata
+colnames(metadata_tintori) <- c("sample", "cellID", "stage", "rep")
+
+# Re-order by sample name
+metadata_tintori <- metadata_tintori[order(metadata_tintori$sample),]
+dim(metadata_tintori)
+#head(metadata_tintori)
+```
+
+### Import Tintori et al Normalized RNA-seq data
+
+Import the scRNA-seq data from Tintori et al., 2016. This is Table S2 of that paper.
+
+```{r import2, echo = TRUE, message = FALSE, warning = FALSE}
+
+# Import the normalized RNA-seq data from Tintori et al.
+tintori <- read.table(file = "../01_input/fromTintori/TableS2_RPKMs.txt", header = TRUE)
+dim(tintori)
+
+# Transform the RNA-seq data long-wise using tidyverse
+tintori_long <- pivot_longer(tintori, cols = 2:220, names_to ="sample", values_to = "rpkm")
+dim(tintori_long)
+head(tintori_long)
+```
+
+### Join the metadata and RNA-seq data
+
+
+```{r join, echo = TRUE, warning = FALSE, message = FALSE}
+# Join the Noramlized RNA-seq data to the metadata into tintori_merged
+tintori_merged <- left_join(tintori_long, metadata_tintori)
+
+# Remove tossed cellIDs
+dim(tintori_merged)
+head(tintori_merged)
+```
+
+### Filter the data
+
+Remove tossed samples from the dataset 
+
+```{r filter, echo = TRUE, message = FALSE, warning = FALSE}
+
+# How many samples should be tossed?
+length(which(metadata_tintori$cellID == "tossed"))
+# 54
+
+# How many entries in the merged set?
+length(which(tintori_merged$cellID == "tossed"))
+# 1,694682
+
+# Remove "tossed" entries
+tintori_retained_merged <- tintori_merged[which( !tintori_merged$cellID == "tossed"),]
+#dim(tintori_retained_merged)
+#head(tintori_retained_merged)
+
+# Reduce the data structue down into a nested data frame:
+tintori_nest_by_transcript <- tintori_retained_merged |>
+  group_by(transcript) |>
+  nest() 
+
+```
+
+### Import Wormbase identifiers
+
+These Wormbase identifiers were downloaded from SimpleMine on March 7, 2025 using the following settings:
+
+![SimpleMineSettings](<https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/01_input/fromSimpleMine/Screenshot%202025-03-07%20at%209.49.07%E2%80%AFAM.png> "SimpleMine Settings")
+
+
+```{r import3, echo = TRUE, message = FALSE, warning = FALSE}
+
+# Import the list that I downloaded from simplemine. There is a screenshot in the same folder that shows what I selected
+wormbaseIDs <- read.table(file = "../01_input/fromSimpleMine/simplemine_results_WBGene_publicName.txt", header = TRUE, fill = TRUE)
+#head(wormbaseIDs)
+
+```
+
+### Merge the tintori data with the Wormbase Gene identifiers
+
+```{r merge, echo = TRUE, message = FALSE, warning = FALSE}
+
+# Merge the annotation genenames to the tintori nested data frame:          
+tintori_nest_by_transcript <- left_join(tintori_nest_by_transcript, wormbaseIDs, join_by( transcript == Public_Name ), keep = TRUE) %>%
+  select( c("transcript", "WormBase_Gene_ID", "Public_Name", "data"))
+  
+dim(tintori_nest_by_transcript)
+#head(tintori_nest_by_transcript)
+
+```
+### Import the time-and-anterior-to-posterior cell order
+
+This is a file I just typed up with the blastomeres listed by developmental time and anterior-to-posterior orientation.
+
+```{r import4, echo = TRUE, message = FALSE, warning = FALSE}
+
+# Order the cell types by stage and anterior-> posterior like so:
+cellType_sorted <- read.table(file = "../01_input/cellTypes_sorted.txt", header = TRUE)
+#cellType_sorted
+
+```
+
+----
+
+## Heatmaps 
+
+Preprocessing the data for heatmaps by making the pre-processed heatmap matrix.
+
+  * Filter for total RPKM > 5
+  * Filter for variance > 10 
+  * Select only the most relevant columns
+
+```{r makematrix1, echo = FALSE, warning = FALSE, message = FALSE}
+
+#### Make a giant heatmap ####
+
+# Filter for present genes greater than 5 summed across 
+tintori_nest_present <- tintori_nest_by_transcript |>
+  rowwise() |>
+  mutate(total_rpkm = sum(data$rpkm)) |>
+  filter(total_rpkm > 5)
+
+# I have 14,776 genes that passed the filter
+dim(tintori_nest_present)
+#head(tintori_nest_present)
+
+
+# Filter for changing genes that have a variance over 10 
+changing <- tintori_nest_present |>
+  rowwise() |>
+  mutate(var = 100*var(data$rpkm)/total_rpkm) |>
+  filter(var > 10)  
+
+unchanging <- tintori_nest_present |>
+  rowwise() |>
+  mutate(var = 100*var(data$rpkm)/total_rpkm) |>
+  filter(var <= 10)  
+
+# I have 12,783 changing genes
+dim(changing)
+
+# I have 1,993 unchanging genes
+dim(unchanging)
+
+# Unnest the changing datastructure and convert into a matrix for heatmap plotting
+# Unnest
+changing_unnested <- changing |>
+  select(transcript, data) |>
+  unnest(data) |>
+  select(transcript, cellID, rpkm, rep, stage) |>
+  mutate( cell_combo = paste(cellID, rep, sep = "_"))
+#changing_unnested
+
+# Here is a dataframe that has each column as a cell type + replicate and each row as a gene and each value as rpkm
+changing_unnested_wide <- changing_unnested |>
+  filter(stage != "16-cell") |>
+  select(transcript, rpkm, cell_combo) |>
+  pivot_wider(names_from = cell_combo, values_from = rpkm)
+#changing_unnested_wide
+
+# Here is a dataframe that merges each column as a cell type (replicates merged), each row is a gene, and each value is the mean rpkm
+changing_wide_df <- changing_unnested |>
+  group_by(transcript, cellID) |>
+  summarise(mean_rpkm = mean(rpkm)) |>
+  pivot_wider(names_from = cellID, values_from = mean_rpkm)
+#changing_wide_df
+#dim(changing_wide_df)
+#str(changing_wide_df) #it's a tibble data frame
+
+# change to a data frame
+changing_wide_df <- as.data.frame(changing_wide_df)
+#changing_wide_df
+
+# create rownames
+rownames(changing_wide_df) <- changing_wide_df$transcript
+
+# Remove transcript column
+changing_wide_df <- changing_wide_df[ 2:dim(changing_wide_df)[2]]
+changing_wide_df <- as.data.frame(changing_wide_df)
+#str(changing_wide_df)
+#dim(changing_wide_df)
+
+# Change to a matrix:
+changing_wide_mat <- as.matrix(changing_wide_df)
+#changing_wide_mat
+```
+
+
+
+
+### Re-organize datasets by preferred cell type order
+
+Merge pre-processed, heatmap-ready matrix with the preferred cell order information. 
+
+```{r makematrix2, echo = FALSE, message = FALSE, warning = FALSE}
+
+colnames(changing_wide_mat)
+
+bestOrder <- c(23, 1, 24, 2, 7, 17, 25, 3, 5, 8, 10, 12, 16, 20, 26, 4, 6, 9, 11, 13, 14, 15, 18, 19, 21, 22, 27)
+
+heatmap_order <- c("P0", "AB", "P1", "ABa", "ABp", "EMS", "P2", "ABal", "ABar", "ABpl", "ABpr", "C", "E", "MS", "P3", "ABalx", "ABarx", "ABplx", "ABprx", "Cx1", "Cx2", "D", "Ea", "Ep", "MSx1", "MSx2", "P4")
+
+# Do I have 27 cell types?
+#length(bestOrder)
+#length(unique(bestOrder))
+#dim(cellType_sorted)[1]
+
+# re-arrange changing_wide_mat columns by the best order 
+changing_wide_mat <- changing_wide_mat[ , heatmap_order]
+str(colnames(changing_wide_mat))
+
+```
+
+#### Optimize for preferred heatmap type (not included in paper)
+
+I tested the following settings for heatmaps: 
+
+  * Complete looks good
+  * Euclidean also looks good
+  * "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
+
+Processing: 
+
+  * Use Canaberra complete to draw a heatmap and to split it into clusters
+  * Cut the heatmap into 5 clusters
+  * Annotate the cluster names back onto the original heatmap
+
+
+```{r heatmap1, echo = TRUE, message = FALSE, warning = FALSE}
+
+# Canabarra, complete looks best
+# Euclidean also looks good
+# "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
+#wardD - looks good
+#wardD2 - looks good
+#single- nope
+
+# OF all these, the canberra complete looks the best at separataing out the "decay" group. Euclidean Complete is also very good.
+
+# Here is my favorite heatmap: cannaberra + complete. this one is great for separating out the zygotically transcribed (global) and maternal decay (global) genes:
+set.seed(2025)
+heatmap_caco5 <- pheatmap(changing_wide_mat, 
+         cluster_cols = FALSE,
+         scale = "row", 
+         show_rownames = FALSE,
+         clustering_distance_rows = "canberra", 
+         clustering_method = "complete", 
+         cutree_rows = 5)
+
+#heatmap_caco5
+# I split it into five clusters. I want to annotate the cluster number onto the plot so we can ensure that the cluster numbers match. 
+# I want what looks like the 2nd and 3rd clusters as the "maternal transcripts undergoing decay groups"
+
+# obtain the cluster information and add it into the matrix
+cluster_set = cutree(heatmap_caco5$tree_row, 5)
+clustered_changing_wide_mat <- cbind(changing_wide_mat, 
+                     cluster = cluster_set )
+
+# add cluster data into its own data frame
+ann = data.frame(cluster_set)
+rownames(ann) = rownames(clustered_changing_wide_mat)
+
+#head(ann)
+# Colors of the 
+vcolors = plasma(7)[1:5]
+#vcolors[1]
+
+my_colour = list(cluster_set = c( "1" = vcolors[1], "2" = vcolors[5], "3" = vcolors[3], "4" = vcolors[2], "5" = vcolors[4]))
+
+# Make an annotated heatmap using canaberra + complete:
+#set.seed(2025)
+heatmap_caco5_ann <- pheatmap(changing_wide_mat, 
+         cluster_cols = FALSE,
+         scale = "row", 
+         annotation_colors = my_colour,
+         show_rownames = FALSE,
+         clustering_distance_rows = "canberra", 
+         clustering_method = "complete", 
+         cutree_rows = 5,
+         annotation_row=ann)
+
+#heatmap_caco5_ann
+```
+
+
+---- 
+
+### Split genes into clusters based on heatmap 
+
+Take the clusters generated in heatmap_caco5_ann heatmap and split them into clusters of gene lists.
+
+For each cluster, generate lineplots of merged transcript abundance values across cell-type
+
+This will be a supplemental figure
+
+```{r clusterlists, echo = FALSE, message = FALSE, warning = FALSE}
+
+# filter out lists of genes from each cluster
+#head(clustered_changing_wide_mat)
+
+# change to a data frame:
+clustered_changing_wide_df <- as.data.frame(clustered_changing_wide_mat)
+#head(clustered_changing_wide_df)
+
+# Set the cluster # as a factor:
+clustered_changing_wide_df$cluster <- as.factor(clustered_changing_wide_df$cluster)
+
+# How many in each cluster:
+summary(clustered_changing_wide_df$cluster)
+
+# subset clusters
+cluster1 <- clustered_changing_wide_df |>
+  filter(cluster == 1)
+cluster2 <- clustered_changing_wide_df |>
+  filter(cluster == 2)
+cluster3 <- clustered_changing_wide_df |>
+  filter(cluster == 3)
+cluster4 <- clustered_changing_wide_df |>
+  filter(cluster == 4)
+cluster5 <- clustered_changing_wide_df |>
+  filter(cluster == 5)
+
+# Create a dataframe that is grouped by the cluster and calculate the mean values of each cell ID across the cluster:
+mean_by_cluster <- clustered_changing_wide_df %>% 
+  group_by(cluster) %>%
+  summarise_all("mean")
+
+# eda 
+dim(mean_by_cluster)
+meanbycluster <- as.data.frame(mean_by_cluster)
+#meanbycluster
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+longer_means_by_cluster <- pivot_longer(meanbycluster, cols = 2:28, names_to ="cell",
+             values_to = "intensity")
+
+# Set cell ID as an ordered factor
+longer_means_by_cluster$cell <- factor(longer_means_by_cluster$cell, levels = colnames(changing_wide_mat))
+
+longer_means_by_cluster$cluster <- factor(longer_means_by_cluster$cluster, levels = c(1,4,3,5,2))
+
+# create lineplots of the trend over cell type for each cluster
+vcolors = plasma(7)[1:5]
+#vcolors
+lineplot_clusters <- ggplot(longer_means_by_cluster, aes(x=cell, y=intensity, group=cluster, colour=cluster)) + 
+  geom_line()+
+  geom_point() +
+  scale_color_manual(values = vcolors) +
+  facet_grid(rows = vars(cluster))
+
+lineplot_clusters
+
+
+
+```
+
+### Save lineplot split by clusters
+
+Supplemental Figure
+
+```{r heatmap_and_clusters, echo = TRUE, message = FALSE, warning = FALSE}
+
+today <- format(Sys.Date(), "%y%m%d")
+filename2 <- paste("../03_outputPlots/", today, "_cluster_lineplots.pdf", sep = "")
+pdf(filename2, width = 6, height = 6)
+
+lineplot_clusters
+
+dev.off()
+
+```
+
+----
+
+## Quick experimentation into a different ordering of the cells 
+
+It came up in discussion - what would the lineplot look like if it were split more by lineage? 
+
+This looks nice and we will include it as a supplemental figure
+
+```{r lineplot_testing, echo = TRUE, message = FALSE, warning = FALSE}
+
+# Try a different ordering of cell
+#head(meanbycluster)
+
+length(colnames(meanbycluster))
+testOrder <- c(1, 2, 4, 8, 16, 28, 3, 5, 6, 9, 10, 11, 12, 17, 18, 19, 20, 7, 14, 24, 25, 15, 26, 27, 13, 21, 22, 23)
+length(testOrder)
+
+# re-arrange changing_wide_mat columns by the best order 
+meanbycluster_reordered <- meanbycluster[ , testOrder]
+
+head(meanbycluster_reordered)
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+longer_means_by_cluster_reordered <- pivot_longer(meanbycluster_reordered, cols = 2:28, names_to ="cell",
+             values_to = "intensity")
+
+# Set cell ID and cluster as ordered factors
+longer_means_by_cluster_reordered$cell <- factor(longer_means_by_cluster_reordered$cell, levels = colnames(meanbycluster)[testOrder])
+longer_means_by_cluster_reordered$cluster <- factor(longer_means_by_cluster_reordered$cluster, levels = c(1,4,3,5,2))
+
+# create lineplots of the trend over cell type for each cluster
+vcolors = plasma(7)[1:5]
+#vcolors
+lineplot_clusters2 <- ggplot(longer_means_by_cluster_reordered, aes(x=cell, y=intensity, group=cluster, colour=cluster)) + 
+  geom_line()+
+  geom_point() +
+  scale_color_manual(values = vcolors) +
+  facet_grid(rows = vars(cluster))
+
+lineplot_clusters2
+
+
+# Save plot
+today <- format(Sys.Date(), "%y%m%d")
+filename2 <- paste("../03_outputPlots/", today, "_cluster_lineplots_test_new_order.pdf", sep = "")
+pdf(filename2, width = 6, height = 6)
+
+lineplot_clusters2
+
+dev.off()
+
+
+
+```
+
+
+### import the gene lists of SPN-4, OMA-1, and LIN-41 targets
+
+The next goal will be to assess which clusters contain SPN-4, OMA-1, and LIN-41 associated mRNAs and to what degree. The predition is that if SPN-4 is associated with mRNA decay, then the clusters that are driven by decay of maternal mRNAs will have a higher propensity of SPN-4 associated mRNAs.
+
+These lists of sets are from [a previous analysis within this same github repository](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/02_SPN4_LIN41_OMA1_Comparison_Fig_1_S1/04_output_data)
+
+```{r import5, echo = TRUE, warning = FALSE, message = FALSE}
+
+# import the gene lists
+OMA1_1 <- read.table(file = "../01_input/lists_from_02/20250711_OMA1_ONLY_list.txt")
+SPN4_2 <- read.table(file = "../01_input/lists_from_02/20250711_SPN4_ONLY_list.txt")
+LIN41_3 <- read.table(file = "../01_input/lists_from_02/20250711_LIN41_ONLY_list.txt")
+OMA1LIN41_4 <- read.table(file = "../01_input/lists_from_02/20250711_OMA1_LIN41_list.txt")
+OMA1SPN4_5 <- read.table(file = "../01_input/lists_from_02/20250711_OMA1_SPN4_list.txt")
+LIN41SPN4_6 <- read.table(file = "../01_input/lists_from_02/20250711_LIN41_and_SPN4_list.txt")
+ALL_7 <- read.table(file = "../01_input/lists_from_02/20250711_OMA1_SPN4_LIN41_list.txt")
+```
+
+Merge the datasets 
+
+```{r, echo = TRUE, message = FALSE, warning = FALSE}
+# eda
+#str(OMA1_1)
+#str(SPN4_2)
+#str(LIN41_3)
+#str(OMA1LIN41_4)
+#str(OMA1SPN4_5)
+#str(LIN41SPN4_6)
+#str(ALL_7)
+
+# Annotate the dataframes:
+OMA1_1 <- OMA1_1 %>% 
+  mutate(IP = "OMA-1")
+
+SPN4_2 <- SPN4_2 %>% 
+  mutate(IP = "SPN-4")
+
+LIN41_3 <- LIN41_3 %>% 
+  mutate(IP = "LIN-41")
+
+OMA1LIN41_4 <- OMA1LIN41_4 %>% 
+  mutate(IP = "OMA-1_LIN-41")
+
+OMA1SPN4_5 <- OMA1SPN4_5 %>% 
+  mutate(IP = "OMA-1_SPN-4")
+
+LIN41SPN4_6 <- LIN41SPN4_6 %>% 
+  mutate(IP = "LIN-41_SPN-4")
+
+ALL_7 <- ALL_7 %>% 
+  mutate(IP = "OMA-1_SPN-4_LIN-41")
+
+# merge the gene lists
+IP_lookup <- rbind(OMA1_1, SPN4_2, LIN41_3, OMA1LIN41_4, OMA1SPN4_5, LIN41SPN4_6, ALL_7)
+
+#IP_lookup
+
+colnames(IP_lookup) <- c("WormBase_Gene_ID", "IP") 
+dim(IP_lookup)
+head(IP_lookup)
+
+# user wormbaseID dataframe to add transcript names to gene lists
+#head(wormbaseIDs)
+IP_lookup_annotated <- left_join(IP_lookup, wormbaseIDs)
+
+# I also need an IP lookup right join to create the full data table that will be included as a supplemental table
+IP_lookup_right_join <- left_join(wormbaseIDs, IP_lookup)
+dim(IP_lookup_right_join)
+head(IP_lookup_right_join)
+# merge gene lists with changing_wide_mat
+
+# I want to create an annotated heatmap that duplicates the heatmap above but that includes the IP category and Cluster Categories
+changing_wide_df <- rownames_to_column(as.data.frame(changing_wide_mat))
+#head(changing_wide_df)
+
+# I will use the changing_wide_df dataframe that contains the information for the Tintori gene expresison heatmp
+# Merge this to the IP categories
+changing_wide_IP <- left_join(changing_wide_df, IP_lookup_annotated, by = c("rowname"="Sequence_Name"))
+# add rownames
+changing_wide_df_plusIP <- column_to_rownames(changing_wide_IP[,1:30]) 
+changing_wide_IP
+# add cluster categories. This is coming from the table ann
+
+# Check that ann and the heatmap (that ann was based from) still have the identical rows and can be merged together (don't need to join)
+table(rownames(ann) == rownames(changing_wide_df_plusIP))
+
+# If TRUE, join together the annotations and hte 
+
+head(changing_wide_df_plusIP)
+
+changing_wide_df_plusIP
+ann2 <- cbind(ann, changing_wide_df_plusIP$IP)
+colnames(ann2) <- c("cluster_set", "IP")
+
+#IP_lookup_right_join
+# Add in the RBP Bound state:
+IP_lookup_right_join_plusRBP <- IP_lookup_right_join %>%
+  mutate(RBP_assoc = case_when(
+    IP == "SPN-4" ~ "SPN4",
+    IP == "LIN-41" ~ "other_RBP",
+    IP == "OMA-1" ~ "other_RBP",
+    IP == "OMA-1_LIN-41" ~ "other_RBP",
+    IP == "OMA-1_SPN-4" ~ "SPN4",
+    IP == "LIN-41_SPN-4" ~ "SPN4",
+    IP == "OMA-1_SPN-4_LIN-41" ~ "SPN4",
+    IP == "none" ~ "none"
+  ))
+
+# Add in the cluster data 
+clustered_changing_wide_df_rn <- rownames_to_column(clustered_changing_wide_df)
+head(clustered_changing_wide_df_rn)
+colnames(clustered_changing_wide_df_rn)[1] <- "Sequence_Name"
+head(clustered_changing_wide_df_rn[,c(1,29)])
+head(IP_lookup_right_join_plusRBP)
+
+annotated_full_set <- left_join(IP_lookup_right_join_plusRBP, clustered_changing_wide_df_rn[ ,c(1,29)])
+
+dim(annotated_full_set)
+str(annotated_full_set)
+table(annotated_full_set$cluster)
+table(annotated_full_set$IP)
+table(annotated_full_set$RBP_assoc)
+
+peek <- annotated_full_set %>%
+  filter(RBP_assoc == "SPN4" | RBP_assoc == "other_RBP")
+
+peek[1:500, ]
+annotated_full_set[1:100,]
+
+# Save the dataframe
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("../03_outputPlots/", today, "_annotated_IP_and_cluster_info.txt", sep = "")
+write.table(annotated_full_set, file = filename4, quote = FALSE, sep = "\t", row.names = FALSE)
+
+```
+
+### Make an annotated heatmap
+
+This is the heatmap that will be used in the paper as a supplemental figure. Tintori et al data plotted as a heatmap, with cell-types sorted by stage and anterior-to-posterior orientation, colored for the different clusters, and annotated for the SPN-4, OMA-1, and LIN-41 associated mRNAs. 
+
+```{r heatmap3, echo = FALSE, warning = FALSE, message = FALSE}
+
+# Make an annotated heatmap using canaberra + complete:
+set.seed(2025)
+heatmap_caco5_ip <- pheatmap(changing_wide_mat, 
+                              cluster_cols = FALSE,
+                              scale = "row", 
+                              show_rownames = FALSE,
+                              annotation_colors = my_colour,
+                              clustering_distance_rows = "canberra", 
+                              clustering_method = "complete", 
+                              cutree_rows = 5,
+                              annotation_row=ann2)
+
+#heatmap_caco5_ip
+
+#dim(changing_wide_mat)
+
+```
+
+
+### Save the heatmap 
+
+This will be used as a Supplemental Figure. 
+
+Note, the .pdf and .jpg output was too big for github. Had to export things manually.
+
+```{r heatmap4, echo = TRUE, message = FALSE, warning = FALSE}
+# Save the heatmap:
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("../03_outputPlots/", today, "_heatmap_clusters_and_IP.pdf", sep = "")
+pdf(filename4, width = 6, height = 8)
+
+heatmap_caco5_ip
+    
+dev.off()
+
+# This didn't work. Had to use Export -> Export as Jpeg
+#filename5 <- paste("../03_outputPlots/", today, "_heatmap_clusters_and_IP.jpg", sep = "")
+#jpeg(filename5, width = 6, height = 8)
+
+#heatmap_caco5_ip
+
+#dev.off()
+
+
+
+```
+
+## Mosaic plots
+
+Make mosaicplots split by RNA cohort. These will illustrate whether there is a relationship between the cluster set category (from Tintori data: maternal decay pattern, zygotic transcriptional activation, cell specific transcriptional activation) versus the IP category (from this paper's IP-seq: SPN-4 bound, etc). 
+
+Next, plot what percentage of the mRNA transcripts in the maternally decay clusters (Clusters 3 & 5) that are associated with SPN-4 binding? This will determine what percentage of total maternal decay SPN-4 controls.
+
+Then, try to determine how this percentage changes if the actual expression level of a given transcript is taken into account. What percentage of the total transcripts in the transcriptome are associated with SPN-4?
+
+Please note that the SPN-4 assocation in this case will be independent of LIN-41 and OMA-1 association.
+
+
+```{r lineplots4, echo = TRUE, message = FALSE, warning = FALSE}
+
+# copy the ann2 annotated metadata information into a new dataframe
+ann3 <- ann2
+
+# set the cluster column as factors
+ann3$cluster_set <- factor(ann3$cluster_set, levels = c(1, 4, 3, 5, 2))
+# change "NA" to "none"
+ann3[which(is.na(ann3$IP)), 2] <- "none"
+# set IP status as a factor
+ann3$IP <- factor(ann3$IP, levels = c("OMA-1", "SPN-4", "LIN-41", "OMA-1_LIN-41", "OMA-1_SPN-4", "LIN-41_SPN-4", "OMA-1_SPN-4_LIN-41", "none"))
+
+str(ann3)
+
+# create a tabulation of the information in ann3
+ann3tabs <- xtabs(~ cluster_set + IP, data = ann3)
+
+# Build a mosaic plot of the tabulation
+mosaicplot1 <- mosaic(ann3tabs, gp = shading_max, 
+                      split_horizontal = TRUE)
+
+#########################
+
+# First - ask the question: what percentage of each cluster set is predicted to be associated with SPN-4 (independent of other binding)?
+# Create a barplot tabulating the % of SPN-4 associated genes within each cluster
+tabs_dataframe <- as.data.frame(mosaicplot1)
+
+# Calculate SPN-4 associated gene as a percentage of each cluster set - without FPKM taken into account
+SPN4_Percentage_plot <- tabs_dataframe |>
+  pivot_wider(names_from = IP, values_from = Freq) |>
+  rowwise(cluster_set) |>
+  mutate(SPN_percent = sum(c(`SPN-4`, `OMA-1_SPN-4`, `LIN-41_SPN-4`, `OMA-1_SPN-4_LIN-41`))/sum(c_across(`OMA-1`:`none`))*100)
+
+# Create labels of percentage values
+textSPN <- paste(round(SPN4_Percentage_plot$SPN_percent, 2), " %", sep = "")
+
+# Set colors
+vcolors = plasma(7)[1:5]
+#vcolors[1]
+
+# Create a barplot - what percentages of genes in each cluster category (Tintori data) are associated with SPN-4? This is independent of LIN-41 and OMA-1 binding. This percentage is independent of expression level of the gene. It just reflects how many genes in a category are associated with SPN-4. 
+bp1 <- barplot(rev(SPN4_Percentage_plot$SPN_percent), xlim = c(0, 20),
+        names.arg = rev(SPN4_Percentage_plot$cluster_set),
+        ylab = "Cluster Set", 
+        xlab = "Percentage of SPN-4 associated mRNAs in cluster", 
+        col = rev(vcolors), 
+        horiz = TRUE,
+        las = 1)
+# Add text
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = rev(bp1), labels = textSPN)
+
+# Calculate the combined percentage of SPN-4 in Cluster 3 and Cluster 5 - 
+# tabulate the total number of SPN-4 associated genes per cluster and the total number of genes per cluster  
+SPN4_Percentage_plot_2 <- tabs_dataframe |>
+  pivot_wider(names_from = IP, values_from = Freq) |>
+  rowwise(cluster_set) |>
+  mutate(SPN_tot = sum(c(`SPN-4`, `OMA-1_SPN-4`, `LIN-41_SPN-4`, `OMA-1_SPN-4_LIN-41`))) |>
+  mutate(all_tot = sum(c(`OMA-1`, `SPN-4`, `LIN-41`, `OMA-1_LIN-41`, `OMA-1_SPN-4`, `LIN-41_SPN-4`, `OMA-1_SPN-4_LIN-41`, `none`)))
+
+# calculate the percentage of SPN-4 genes in Cluster 3 and 5
+totalSPN4_3_and_5 <- (SPN4_Percentage_plot_2$SPN_tot[3] + SPN4_Percentage_plot_2$SPN_tot[4]) / (SPN4_Percentage_plot_2$all_tot[3] + SPN4_Percentage_plot_2$all_tot[4] )*100
+
+totalSPN4_3_and_5 <- paste(round(totalSPN4_3_and_5, 2), " %", sep = "")
+
+text(x = 18, y = 2.5, labels = totalSPN4_3_and_5)
+
+######## FPKM taken into account ###########
+# Calculate the percentage of SPN-4 associated transcripts in Cluster 3 and 5 as a percentage of the total mRNA content in the embryo at the time...
+
+ann4 <- cbind(ann, changing_wide_df_plusIP$IP, changing_wide_df_plusIP$P0)
+colnames(ann4) <- c("cluster_set", "IP", "P0_fpkm")
+
+
+# Calculate total fpkm for Cluster 3
+ann4_cluster3 <- ann4 %>%
+  filter ( cluster_set == 3)
+dim(ann4_cluster3)
+
+ann4_cluster3_spn4 <- ann4 %>%
+  filter ( cluster_set == 3) %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4")
+dim(ann4_cluster3_spn4)
+
+156/2463
+
+# calculate percentage of total molecules: 
+percent_cluster3_adj_fpkm <- (sum(ann4_cluster3_spn4$P0_fpkm) / sum(ann4_cluster3$P0_fpkm)) *100
+
+####################################
+# Calculate total fpkm for Cluster 5
+ann4_cluster5 <- ann4 %>%
+  filter ( cluster_set == 5)
+dim(ann4)
+dim(ann4_cluster5)
+
+ann4_cluster5_spn4 <- ann4 %>%
+  filter ( cluster_set == 5) %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4")
+dim(ann4_cluster5_spn4)
+
+132/1144
+
+# calculate percentage of total molecules: 
+percent_cluster3_adj_fpkm <- (sum(ann4_cluster5_spn4$P0_fpkm) / sum(ann4_cluster5$P0_fpkm) ) * 100
+
+ann4_fpkm_sum <- ann4 %>%
+  group_by(cluster_set) %>%
+  summarise(tot_sum = sum(P0_fpkm))
+  
+ann4_fpkm_spn4_sum <- ann4 %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4") %>%
+  group_by(cluster_set) %>%
+  summarise(spn4_sum = sum(P0_fpkm)) 
+
+merge_fpkm_adj_values <- left_join(ann4_fpkm_sum, ann4_fpkm_spn4_sum)
+
+merge_fpkm_adj_values
+merge_fpkm_adj_values <- merge_fpkm_adj_values %>%
+  mutate(percent = (spn4_sum / tot_sum )*100)
+
+# Barplot that takes fpkm into account when calculating what percentage of transcripts within each cluster category (Tintori data) associate with SPN-4
+bp2 <- barplot(rev(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent),
+        xlim = c(0,20),
+        names.arg = rev(c("1", "4", "3", "5", "2")),
+        ylab = "Cluster Set", 
+        xlab = "Percentage of SPN-4 associated mRNAs in cluster", 
+        col = rev(vcolors), 
+        horiz = TRUE,
+        las = 1)
+               
+
+# Add text
+textSPN_fpkm <- paste(round(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent, 2), " %", sep = "")
+text(x = merge_fpkm_adj_values[c(1,4,3,5,2),]$percent + 2, y = rev(bp2), labels = textSPN_fpkm[c(1,4,3,5,2)])
+rev(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent)
+
+####################################
+# Calculate total fpkm for both Cluster 3 & Cluster 5
+
+# Calculate total fpkm for Cluster 3 & 5
+ann4_cluster35 <- ann4 %>%
+  filter ( cluster_set == 5 | cluster_set == 3)
+
+dim(ann4_cluster35)
+
+# Calculate the total fpkm for SPN-4 associated transcripts within Cluster 3 & 5:
+ann4_cluster35_spn4 <- ann4_cluster35 %>%
+  filter ( IP == "SPN-4" |  IP == "OMA-1_SPN-4_LIN-41" | IP == "OMA-1_SPN-4" | IP == "LIN-41_SPN-4")
+dim(ann4_cluster35_spn4)
+head(ann4_cluster35_spn4)
+288/3607
+
+# calculate percentage of total molecules:
+cluster3_and_5_percentage_by_fpkm <- (sum(ann4_cluster35_spn4$P0_fpkm) / sum(ann4_cluster35$P0_fpkm) ) * 100
+text_3_and_5_by_fpkm <- paste(round(cluster3_and_5_percentage_by_fpkm, 2), " %", sep = "")
+
+text(x = 18, y = 2.5, labels = text_3_and_5_by_fpkm)
+
+
+```
+
+### Save the barplot (% SPN-4 associated mRNAs in each clusteer)
+
+This will be a Supplementary Figure
+
+```{r explortBarPlot, echo = TRUE, warning = TRUE, message = TRUE}
+
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("../03_outputPlots/", today, "_SPN4_percentage_barplot.pdf", sep = "")
+
+#--> Note: this didn't look right. Had to save with Export -> Save As PDF
+
+pdf(filename4, width = 5, height = 5)
+
+bp1 <- barplot(rev(SPN4_Percentage_plot$SPN_percent), xlim = c(0, 20),
+        names.arg = rev(SPN4_Percentage_plot$cluster_set),
+        xlab = "Cluster Set", 
+        ylab = "Percentage of SPN-4 associated mRNAs in cluster", 
+        col = rev(vcolors), 
+        horiz = TRUE,
+        las = 1)
+               
+# Add text
+text(x = SPN4_Percentage_plot$SPN_percent + 2, y = rev(bp1), labels = textSPN)
+
+text(x = 18, y = 2.5, labels = totalSPN4_3_and_5)
+
+dev.off()
+
+#### Also save a barplot with the fpkm adjusted percentages:
+
+today <- format(Sys.Date(), "%y%m%d")
+filename4 <- paste("../03_outputPlots/", today, "_SPN4_percentage_barplot_fpkmAdj.pdf", sep = "")
+
+#--> Note: this didn't look right. Had to save with Export -> Save As PDF
+
+pdf(filename4, width = 5, height = 5)
+
+bp2 <- barplot(rev(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent),
+        xlim = c(0,20),
+        names.arg = rev(c("1", "4", "3", "5", "2")),
+        ylab = "Cluster Set", 
+        xlab = "Percentage of total mRNA molecules in cluster that are SPN-4 associated (fpkm-adjusted)", 
+        col = rev(vcolors), 
+        horiz = TRUE,
+        las = 1)
+
+
+# Add text
+text(x = merge_fpkm_adj_values[c(1,4,3,5,2),]$percent + 2, y = rev(bp2), labels = textSPN_fpkm[c(1,4,3,5,2)])
+rev(merge_fpkm_adj_values[c(1,4,3,5,2),]$percent)
+
+text(x = 18, y = 2.5, labels = text_3_and_5_by_fpkm)
+
+dev.off()
+
+
+```
+
+
+### Save the mosaic plot
+
+Supplemental Figure. 
+
+```{r export5, echo = TRUE, }
+
+today <- format(Sys.Date(), "%y%m%d")
+filename3 <- paste("../03_outputPlots/", today, "_mosaicplot.pdf", sep = "")
+
+#--> Note: this didn't look right. Had to save with Export -> Save As PDF
+
+pdf(filename3, width = 8, height = 8)
+
+mosaic(ann3tabs, gp = shading_max, 
+       split_horizontal = TRUE)
+
+dev.off()
+
+```
+
+## Lineplots, split by cluster set
+
+Create lineplots of abundance in the Tintori dataset, split out by cluster or by RBP Association
+
+Supplemental Figure
+
+```{r lineplots5, echo = TRUE, message = FALSE, warning = FALSE}
+
+############ CREATE LINEPLOTS group_by IP #############
+
+# start with clustered_changing_wide_df and annotate with ann2 using left_join
+#head(clustered_changing_wide_df)
+#head(ann2)
+
+clustered_changing_wide_ann2 <- left_join(rownames_to_column(clustered_changing_wide_df), rownames_to_column(ann3))
+clustered_changing_wide_ann2 <- column_to_rownames(clustered_changing_wide_ann2) 
+clustered_changing_wide_ann2 <- clustered_changing_wide_ann2 %>%
+  select(!(cluster:cluster_set))
+
+
+#head(clustered_changing_wide_ann2)
+# Create a dataframe that is grouped by the cluster and calculate the mean values of each cell ID across the cluster:
+
+mean_by_IP <- clustered_changing_wide_ann2 %>% 
+  group_by(IP) %>%
+  summarise_all("mean")
+
+# eda 
+#dim(mean_by_IP)
+#mean_by_IP
+mean_by_IP <- as.data.frame(mean_by_IP)
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+longer_means_by_IP <- pivot_longer(mean_by_IP, cols = 2:28, names_to = "cell",
+                                        values_to = "intensity")
+
+# Set cell ID as an ordered factor
+longer_means_by_IP$cell <- factor(longer_means_by_IP$cell, levels = colnames(changing_wide_mat))
+longer_means_by_IP
+# create lineplots of the trend over cell type for each cluster
+lineplot_IP <- ggplot(longer_means_by_IP, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
+  geom_line()+
+  geom_point() +
+  facet_grid(rows = vars(IP))
+
+lineplot_IP
+```
+
+### Save the lineplot
+
+
+```{r lineplotExport, echo = TRUE, message = FALSE, warning = FALSE}
+
+# Save theis plot to annotate the heatmap:
+# 
+# today <- format(Sys.Date(), "%y%m%d")
+# filename5 <- paste("../03_outputPlots/", today, "_IP_lineplots.pdf", sep = "")
+# pdf(filename5, width = 6, height = 6)
+# 
+# lineplot_IP
+
+dev.off()
+
+```
+
+
+---- 
+
+## Playing around with a different cell order
+
+
+```{r testing_lineplot_newOrder }
+
+#clustered_changing_wide_df
+#clustered_changing_wide_ann2
+#mean_by_IP
+
+lineageOrder <- c("IP", "P0", "P1", "P2", "P3", "P4", "AB", "ABa", "ABp", "ABal", "ABar", "ABpl", "ABpr", "ABalx", "ABarx", "ABplx", "ABprx", "EMS", "E", "Ea", "Ep", "MS", "MSx1", "MSx2", "C", "Cx1", "Cx2", "D")
+
+
+
+dim(mean_by_IP)
+length(lineageOrder)
+colnames(mean_by_IP[, testOrder])
+
+mean_by_IP[, testOrder]
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+longer_means_by_IP_2 <- pivot_longer(mean_by_IP[ , testOrder], cols = 2:28, names_to = "cell",
+                                        values_to = "intensity")
+
+
+# Set cell ID as an ordered factor
+longer_means_by_IP_2$cell <- factor(longer_means_by_IP_2$cell, levels = colnames(mean_by_IP)[testOrder])
+
+# Set colors
+vcolors = plasma(7)[1:5]
+
+# create lineplots of the trend over cell type for each cluster
+lineplot_IP_2 <- ggplot(longer_means_by_IP_2, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
+  geom_line()+
+  geom_point() +
+  facet_grid(rows = vars(IP))
+
+lineplot_IP_2
+
+# today <- format(Sys.Date(), "%y%m%d")
+# filename5 <- paste("../03_outputPlots/", today, "_IP_lineplots_new_order.pdf", sep = "")
+# pdf(filename5, width = 6, height = 6)
+# 
+# lineplot_IP_2
+# 
+# dev.off()
+
+```
+
+## Additional plots 
+
+These plots were developed as part of the first set of revisions to address reviewer's comments.
+
+### Calculate the clusters that are represented in SPN-4-bound versus un-bound categories
+
+```{r spn4 split, echo = TRUE, message = TRUE, warning = FALSE}
+
+# Start with ann3tabs: Cluster set v. IP status
+str(ann3tabs)
+
+# Convert to data frame
+ann3_tabs_df <- as.data.frame(ann3tabs)
+
+# Compress information down to SPN4-bound vesus un-bound
+ann3_tabs_long_spn4bound <- ann3_tabs_df %>%
+  mutate(SPN4bound = case_when(
+    IP == "SPN-4" ~ TRUE,
+    IP == "LIN-41" ~ FALSE,
+    IP == "OMA-1" ~ FALSE,
+    IP == "OMA-1_LIN-41" ~ FALSE,
+    IP == "OMA-1_SPN-4" ~ TRUE,
+    IP == "LIN-41_SPN-4" ~ TRUE,
+    IP == "OMA-1_SPN-4_LIN-41" ~ TRUE,
+    IP == "none" ~ FALSE
+  ))
+
+
+# Set the order of categories
+ann3_tabs_long_spn4bound$cluster_set <- factor(ann3_tabs_long_spn4bound$cluster_set, levels = c(1,4,3,5,2))
+ann3_tabs_long_spn4bound
+# Set the colors
+vcolors = plasma(7)[1:5]
+
+# Plot the stacked proportional barplots:
+sbp1 <- ggplot(ann3_tabs_long_spn4bound, aes(fill = cluster_set, y=Freq, x = SPN4bound))+
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_manual(values = vcolors)
+
+sbp1
+
+#Check numbers
+ann3_tabs_long_spn4bound %>%
+  group_by(SPN4bound) %>%
+  summarize(sum = sum(Freq))
+
+```
+
+### Save SPN-4 bound v. unbound stacked, proportional barplot
+
+```{r stackedBarPlots, echo = FALSE, message = FALSE, warning = FALSE}
+
+
+today <- format(Sys.Date(), "%y%m%d")
+filename3 <- paste("../03_outputPlots/", today, "_stackedBarPlot_SPN4bound.pdf", sep = "")
+
+pdf(filename3, width = 4, height = 4)
+
+sbp1
+
+dev.off()
+
+
+```
+
+### What is the variance of gene expression over developmental time? 
+
+In response to a reviewer comment that we did not include individual lineplots for genes or a measure of the data's spread. 
+
+  * How can we illustrate the range of the data?
+  * First pass - try to plot standard deviation. This was tricky because the y-coordinates became so large that the trends were not as visible. Most of the issue had to do with the fact that some genes are highly expressed and some genes were lowly expressed.
+    * To improve this plot, we would need to z-scale it, then apply standard deviation. It would also be necessary to re-do the faceting. Maybe if we reduced the number of plots down from each possible IP combination to SPN-4 associated v. SPN-4 unassociated?
+  * Second pass - try to make a transparent all line plot. This was tricky because, again, the range of expression levels was so drastically different from gene-to-gene.
+    * To improve this plot, we would need to z-scale.
+    
+```{r zscoredLinePlots, eecho = TRUE, message = TRUE, warning = FALSE} 
+
+############ CREATE LINEPLOTS group_by IP #############
+
+# start with clustered_changing_wide_df and annotate with ann2 using left_join
+#head(clustered_changing_wide_df)
+#head(ann2)
+
+#head(ann3)
+#head(clustered_changing_wide_df)
+
+# Merge the annotations of cluster categories to each gene
+clustered_changing_wide_ann2 <- left_join(rownames_to_column(clustered_changing_wide_df), rownames_to_column(ann3))
+
+# move the gene names into rownames
+clustered_changing_wide_ann2 <- column_to_rownames(clustered_changing_wide_ann2) 
+#clustered_changing_wide_ann2
+
+# Remove the cluster categories - we don't need those
+clustered_changing_wide_ann2 <- clustered_changing_wide_ann2 %>%
+  select(!(cluster:cluster_set))
+#clustered_changing_wide_ann2
+
+#head(clustered_changing_wide_ann2)
+# Create a dataframe that is grouped by the cluster and calculate the mean values of each cell ID across the cluster:
+#as.matrix(clustered_changing_wide_ann2)
+#str(clustered_changing_wide_ann2)
+changing_matrix <- as.matrix(clustered_changing_wide_ann2[,1:27])
+
+# Z-scale and add the annotations back
+
+scaled_changing_mat_inv <- scale(t(changing_matrix))
+scaled_changing_matrix <- as.data.frame(t(scaled_changing_mat_inv))
+
+clustered_scaled_wide_ann2 <- cbind(scaled_changing_matrix, IP = clustered_changing_wide_ann2$IP)
+#str(clustered_scaled_wide_ann2)
+
+# Split into SPN-4 association:
+#clustered_scaled_wide_ann2
+# Compress information down to SPN4-bound vesus un-bound
+ann3_tabs_long_spn4bound <- clustered_scaled_wide_ann2 %>%
+  mutate(RBP_bound = case_when(
+    IP == "SPN-4" ~ "SPN4",
+    IP == "LIN-41" ~ "other_RBP",
+    IP == "OMA-1" ~ "other_RBP",
+    IP == "OMA-1_LIN-41" ~ "other_RBP",
+    IP == "OMA-1_SPN-4" ~ "SPN4",
+    IP == "LIN-41_SPN-4" ~ "SPN4",
+    IP == "OMA-1_SPN-4_LIN-41" ~ "SPN4",
+    IP == "none" ~ "none"
+  )) %>%
+  select(!(IP))
+
+#ann3_tabs_long_spn4bound
+dim(ann3_tabs_long_spn4bound)
+
+table(ann3_tabs_long_spn4bound$RBP_bound)
+table(clustered_scaled_wide_ann2$IP)
+
+mean_by_RBP <- as.data.frame(ann3_tabs_long_spn4bound) %>%
+  group_by(RBP_bound) %>%
+  summarise_all(mean)
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+mean_by_RBP <- as.data.frame(mean_by_RBP)
+longer_means_by_RBP <- pivot_longer(mean_by_RBP, cols = 2:28, names_to = "cell",
+                                        values_to = "intensity")
+
+# Set cell ID as an ordered factor; set RBP order
+longer_means_by_RBP$cell <- factor(longer_means_by_RBP$cell, levels = lineageOrder[2:28])
+longer_means_by_RBP$RBP_bound <- factor(longer_means_by_RBP$RBP_bound , levels = c("SPN4", "other_RBP", "none"))
+
+# create lineplots of the trend over cell type for each cluster
+lineplot_RBP <- ggplot(longer_means_by_RBP, aes(x=cell, y=intensity, group=RBP_bound, colour=RBP_bound)) + 
+  geom_line()+
+  geom_point() +
+  facet_grid(rows = vars(RBP_bound))
+
+lineplot_RBP
+
+# Tabulate the number of genes in each category:
+table(ann3_tabs_long_spn4bound$RBP_bound)
+
+
+```
+
+### Output the mean by lineage - z-scored
+
+```{r printZScoredLIneplots, echo = FALSE, message = FALSE, warning = FALSE} 
+
+# Save the lineplot:
+
+today <- format(Sys.Date(), "%y%m%d")
+filename5 <- paste("../03_outputPlots/", today, "_IP_lineplots_zscored_row.pdf", sep = "")
+pdf(filename5, width = 6, height = 6)
+
+lineplot_RBP
+
+dev.off()
+
+```
+
+### Agilent-style transparent multi-lineplots
+
+The reviewer asked to see all the genes mapped to get a sense of the range of the data. I will create an "Agilent" style plot in which each gene is represented by a slightly transparent lineplot and all lineplots are layered on top of one another.
+
+To normalize this type of plot, I will need to 
+  
+  - filter for changing genes
+  - z-score scale across the row
+  
+This normalization approach is typical for gene expression datasets and is necessary before doing any heatmap or lineplot analysis. The reason this is necessary is because there is a 5-fold order of magnitude difference between highly expressed and lowly expressed genes. This normalization allows you to plot highly expressed and lowly expressed genes together without the highly expressed genes swamping out the signal of the lowly expressed genes. This also helps to focus the analysis onto dynamics by emphasizing the changing genes. If unchanging genes are included, they will be artifically made into "dynamic" genes through the z-scoring process and this will introduce an artifactual dynamic signal.
+
+```{r testMultiLinePlots, echo = FALSE, message = FALSE, warning = FALSE}
+
+# Start with annotated tabs by SPN4-assoc, RBP-Assoc, or none categorized, z-scaled data
+#ann3_tabs_long_spn4bound
+#str(ann3_tabs_long_spn4bound)
+
+# change rownames to a column
+ann3_tabs_long_spn4bound_trans <- ann3_tabs_long_spn4bound %>%
+  rownames_to_column(var = "gene")
+
+# pivot data longer
+longer_changing_ann2 <- ann3_tabs_long_spn4bound_trans %>%
+  pivot_longer(cols = c(2:28), names_to = "cell", values_to = "intensity")
+
+# Set factor order
+longer_changing_ann2$cell <- factor(longer_changing_ann2$cell, levels = lineageOrder[2:28])
+longer_changing_ann2$gene <- factor(longer_changing_ann2$gene)
+
+# Plot
+ggplot(longer_changing_ann2, aes(x = cell, y = intensity, group = gene))+
+  geom_line(aes(colour = gene), show.legend = FALSE, alpha = 0.2) +
+  facet_grid(rows = vars(RBP_bound))
+
+
+```
+
+### Export the alpha-tinted multi-lineplot
+
+```{r}
+
+# Save the lineplot:
+
+today <- format(Sys.Date(), "%y%m%d")
+filename5 <- paste("../03_outputPlots/", today, "_multiLineplots_SPN4Only_zscored.pdf", sep = "")
+pdf(filename5, width = 6, height = 4)
+
+ggplot(longer_changing_ann2, aes(x = cell, y = intensity, group = gene))+
+  geom_line(aes(colour = gene), show.legend = FALSE, alpha = 0.2) +
+  facet_grid(rows = vars(RBP_bound))
+
+dev.off()
+
+
+```
+
+
+## Session info
+```{r}
+
+sessionInfo()
+
+```
