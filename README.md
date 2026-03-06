@@ -14,12 +14,13 @@
 
   *   <sup>1</sup>Department of Genetics, Cell Biology, and Development, University of Minnesota, Minneapolis, MN 55455, USA
   *   <sup>2</sup>Department of Biochemistry & Molecular Biology, Colorado State University, Fort Collins, CO 80523, USA
-  -   <sup>3</sup>Department of Biochemistry, University of Colorado Boulder, Boulder, CO 80309, USA
-  -   <sup>4</sup>Howard Hughes Medical Institute, University of Colorado Boulder, Boulder, CO 80309, USA
-  -   <sup>5</sup>Department of Obstetrics, Gynecology, and Women’s Health, University of Minnesota Medical School, Minneapolis, MN 55455, USA
+  *     <sup>3</sup>Department of Biochemistry, University of Colorado Boulder, Boulder, CO 80309, USA
+  *    <sup>4</sup>Howard Hughes Medical Institute, University of Colorado Boulder, Boulder, CO 80309, USA
+  *       <sup>5</sup>Department of Obstetrics, Gynecology, and Women’s Health, University of Minnesota Medical School, Minneapolis, MN 55455, USA
 
-*These authors contributed equally to this work \\
-†These authors contributed equally to this work \\
+*These authors contributed equally to this work
+
+†These authors contributed equally to this work
 
 
 <img width="468" height="524" alt="image" src="https://github.com/user-attachments/assets/10f6edaa-5f85-4b6b-a1c0-ccbf67d0f539" />
