@@ -46,5 +46,5 @@ Click on the links below to go to each directory:
 
 ### [09 chs-1 3'UTR bashing analysis](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/09_chs1_3UTR_bashing)
 
-### 10 CCR4-NOT alleles
+### [10 CCR4-NOT alleles](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/10_CCR4_NOT)
 
