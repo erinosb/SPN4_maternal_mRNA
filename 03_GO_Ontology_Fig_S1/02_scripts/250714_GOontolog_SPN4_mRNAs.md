@@ -58,11 +58,9 @@ within this same github repository
 
 ``` r
 # set wd:
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
 getwd()
 ```
 
-    ## [1] "/Users/erinnishimura/Library/CloudStorage/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1"
 
 ``` r
 # import the data files
