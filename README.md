@@ -3,7 +3,7 @@
 ## SUPPLEMENTAL INFORMATION
 
 
-<h1 align="center">The SPN-4 Rbfox RNA-binding protein selects maternal mRNAs for CCR4-NOT-dependent clearance in early C. elegans embryos</h1>
+<h2 align="center">The SPN-4 Rbfox RNA-binding protein selects maternal mRNAs for CCR4-NOT-dependent clearance in early _C. elegans_ embryos</h2>
 
 
 **Authors:** Caroline A. Spike<sup>1</sup>\*, Dylan M. Parker<sup>2,3,4</sup>\*, Tatsuya Tsukamoto<sup>1</sup>\*, Naly Torres<sup>2</sup>\*, Erika C. Tsukamoto<sup>1</sup>\*, Karissa Coleman<sup>2</sup>, Micah D. Gearhart<sup>5</sup>, David Greenstein<sup>1</sup>†,  Erin Osborne Nishimura<sup>2</sup>†
@@ -23,7 +23,6 @@
 †These authors contributed equally to this work
 
 
-<img width="468" height="524" alt="image" src="https://github.com/user-attachments/assets/10f6edaa-5f85-4b6b-a1c0-ccbf67d0f539" />
 
 This repository accompanies the manuscript "The RNA-Binding Protein SPN-4 coordinates with CCR4-NOT to mediate mRNA clearance in early embryos" by Spike CA, Parker DM, Tsukamoto T, Torres N et al. This work is a collaboration between the labs of David Greenstein at University of Minnesota and Erin Osborne Nishimura at Colorado State University
 
