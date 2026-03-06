@@ -24,7 +24,7 @@
 This repository accompanies the manuscript "The SPN-4 Rbfox RNA-binding protein selects maternal mRNAs for CCR4-NOT-dependent clearance in early *C. elegans* embryos". This repository contains raw input datasets, original scripts, output plots, output data tables, and reports. By generating this repository, we aim to provide transparency in the data analysis process and to serve as a resource for future studies. Please note, the scripts provided are not intended as executable pipelines, but instead as templates. That is, scripts may require path-specific information and additional software, packages, and plugins for full functionality. 
 
 
-**Table of Contents**
+## Table of Contents
 
 ### 01 Comparison of SPN-4, LIN-41, and OMA-1 associated RNA cohorts
 
