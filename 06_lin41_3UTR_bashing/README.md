@@ -1,4 +1,4 @@
-Fig4_lin-41_abundance_3UTR_bashing
+# 06 lin-41 3'UTR bashing analysis
 ================
 Naly Torres
 2025-08-04
