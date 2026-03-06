@@ -54,7 +54,8 @@ These datasets are lists that were generated in a previous analysis located in 0
 ```{r import, echo=TRUE, warning = FALSE, message = FALSE}
 
 # set wd:
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+mywd="option/to/put/your/wd/here"
+setwd(mywd)
 getwd()
 
 # import the data files
@@ -113,7 +114,7 @@ Print Biological Processes plot to a file. Use this in Supplemental Figure.
 ```{r printBP, echo=TRUE, message = FALSE, warning = FALSE}
 
 # Save the plot 
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+setwd(mywd)
 
 pdf("03_output/SPN4_OMA1_LIN41_dotPlot_BP.pdf", height = 10, width = 10)
 cluster.p1 <- dotplot(compareRBPclusters_BP_simple, 
@@ -174,7 +175,7 @@ Save the datasets so that readers can have access to the sets of genes within ea
 
 ```{r Dataset, echo = TRUE}
 # output the list 
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+setwd(mywd)
 
 write.csv(compareRBPclusters_BP_simple@compareClusterResult, file = "03_output/SPN4_assocRNAs_GO_Ontology.csv",
           quote = FALSE)
@@ -215,7 +216,7 @@ Print the Molecular Function to a file
 ```{r printMF, echo=TRUE, message = FALSE, warning = FALSE}
 
 # Save the plot 
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+setwd(mywd)
 
 pdf("03_output/SPN4_OMA1_LIN41_dotPlot_MF.pdf", height = 5, width = 10)
 cluster.p1 <- dotplot(compareRBPclusters_MF_simple,
@@ -265,7 +266,7 @@ Print Cellular Components to a file
 ```{r printCC, echo=TRUE, warning = FALSE, message = FALSE}
 
 # Save the plot 
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+setwd(mywd)
 
 pdf("03_output/SPN4_OMA1_LIN41_dotPlot_CC.pdf", height = 5, width = 10)
 cluster.p1 <- dotplot(compareRBPclusters_CC_simple,
@@ -315,7 +316,7 @@ Print All categories plot to a file
 ```{r printALL, echo=TRUE, warning = FALSE, message = FALSE}
 
 # Save the plot 
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+setwd(mywd)
 
 pdf("03_output/SPN4_OMA1_LIN41_dotPlot_ALL.pdf", height = 5, width = 10)
 cluster.p1 <- dotplot(compareRBPclusters_ALL_simple,
@@ -362,7 +363,7 @@ Print SPN-4 only plot to a file
 ```{r printSPN4only, echo=FALSE, warning = FALSE, message = FALSE}
 
 # Save the plot 
-setwd("~/Dropbox/github/SPN4_maternal_mRNA/03_GO_Ontology_Fig_S1")
+setwd(mywd)
 
 pdf("03_output/SPN4_only_BP.pdf", height = 5, width = 10)
 cluster.p1 <- dotplot(ego_SPN4_simple,
