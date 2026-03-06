@@ -6,7 +6,7 @@ The analysis in this subdirectory takes input data (01_input), runs scripts (02_
 
 Language - R
 
-Package:
+Packages:
 
  * corrplot
  * RColorBrewer
