@@ -6,7 +6,9 @@
 <h1 align="center">The SPN-4 Rbfox RNA-binding protein selects maternal mRNAs for CCR4-NOT-dependent clearance in early C. elegans embryos</h1>
 
 
-Authors: Caroline A. Spike1*, Dylan M. Parker2,3,4*, Tatsuya Tsukamoto1*, Naly Torres2*, Erika C. Tsukamoto1*, Karissa Coleman2, Micah D. Gearhart5, David Greenstein1†,  Erin Osborne Nishimura2†
+**Authors:** Caroline A. Spike<sup>1*</sup>, Dylan M. Parker<sup>2,3,4*</sup>, Tatsuya Tsukamoto1*, Naly Torres2*, Erika C. Tsukamoto1*, Karissa Coleman2, Micah D. Gearhart5, David Greenstein1†,  Erin Osborne Nishimura2†
+
+
 
 Affiliations:
 1Department of Genetics, Cell Biology, and Development, University of Minnesota, Minneapolis, MN 55455, USA
