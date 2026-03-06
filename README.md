@@ -21,21 +21,27 @@
   *   †These authors contributed equally to this work
 
 
+This repository accompanies the manuscript "The SPN-4 Rbfox RNA-binding protein selects maternal mRNAs for CCR4-NOT-dependent clearance in early *C. elegans* embryos". This repository contains raw input datasets, original scripts, output plots, output data tables, and reports. By generating this repository, we aim to provide transparency in the data analysis process and to serve as a resource for future studies. Please note the scripts provided are not intended as executable pipelines, but instead as a templates. Scripts may rely on additional software, packages, and plugins for full execution. 
 
-This repository accompanies the manuscript "The RNA-Binding Protein SPN-4 coordinates with CCR4-NOT to mediate mRNA clearance in early embryos" by Spike CA, Parker DM, Tsukamoto T, Torres N et al. This work is a collaboration between the labs of David Greenstein at University of Minnesota and Erin Osborne Nishimura at Colorado State University
+**Table of Contents **
 
-## 01 SPN-4 IP and RNA-sequencing
+### 01 Comparison of SPN-4, LIN-41, and OMA-1 associated RNA cohorts
 
-## 02 SPN-4, LIN-41, and OMA-1 RNA cohort comparisons 
+### 02 GO Ontology of SPN-4, LIN-41, and OMA-1 associated RNA cohorts
 
-## [03 GO Ontology - functional categories of mRNA associated with SPN-4, OMA-1, or LIN-41](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
+### [03 Insight from Tintoi et al.'s scRNA-seq dataset ](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/03_GO_Ontology_Fig_S1/02_scripts/250714_GOontolog_SPN4_mRNAs.md)
 
-## [04 How SPN-4 associated mRNAs behave in a single-cell sequencing dataset - report](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts/250717_Parsing_scRNAseq_Tintori.md)
+### [04 mRNA abundance of SPN-4 putative target transcripts changes in spn-4 null mutants](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts/250717_Parsing_scRNAseq_Tintori.md)
 
-## 05 spn-4 mutant smFISH analysis
+### 05clearance of lin-41 mRNA is blastomere and lineage-dependent
 
-## 06 3'UTR bashing analysis
+### 06 lin-41 3'UTR bashing analysis
 
-## [08 mRNA total counts in spn-4 null mutants](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/08_spn4_null/02_scripts/250902_plot_analyze_spn4_datasets.md)
+### 07 Double mutant analysis of lin-41 3'UTRs small Fox deletion and spn-4 null mutations
 
-## 07 in vitro binding assays
+### 08 Additional studies in the double mutant analysis
+
+### 09 chs-1 3'UTR bashing analysis
+
+### 10 CCR4-NOT alleles
+
