@@ -34,7 +34,7 @@ Click on the links below to go to each directory:
 
 ### [03 Insight from Tintori et al.'s scRNA-seq dataset ](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/03_Tintori_scRNAseq_analysis)
 
-### [04 mRNA abundance of SPN-4 putative target transcripts changes in spn-4 null mutants](https://github.com/erinosb/SPN4_maternal_mRNA/blob/main/04_Tintori_et_al_Comparison_Fig_2_S2/02_scripts/250717_Parsing_scRNAseq_Tintori.md)
+### [04 mRNA abundance of SPN-4 putative target transcripts changes in spn-4 null mutants](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/04_spn4_null_smFISH)
 
 ### 05clearance of lin-41 mRNA is blastomere and lineage-dependent
 
