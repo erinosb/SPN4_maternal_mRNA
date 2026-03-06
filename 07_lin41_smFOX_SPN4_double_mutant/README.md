@@ -1,24 +1,27 @@
----
-title: "Fig6_lin-41-smFOX_SPN4-double_mutant"
-author: "Naly Torres"
-date: "2025-08-04"
-output: 
-  github_document:
-    toc: true
-    toc_depth: 4
----
+Fig6_lin-41-smFOX_SPN4-double_mutant
+================
+Naly Torres
+2025-08-04
 
-```{r warning=FALSE, message = FALSE} 
+- [1. Read input counts data](#1-read-input-counts-data)
+- [2. Plot total mRNA abundance per
+  strain](#2-plot-total-mrna-abundance-per-strain)
+- [3. Plot mean abundace of groups across cell
+  stages](#3-plot-mean-abundace-of-groups-across-cell-stages)
+  - [4. Statistical analysis](#4-statistical-analysis)
+- [4A. Normally distributed data](#4a-normally-distributed-data)
+- [4B. Non-normally distributed data](#4b-non-normally-distributed-data)
+
+``` r
 library(knitr)
 library(ggplot2)
 library(dplyr)
 library(rstatix)
 ```
 
-
 ### 1. Read input counts data
-```{r echo=TRUE, warning=FALSE, message = FALSE}
 
+``` r
 # Define relative input folder path
 input_path <- "../01_input/Fig5_lin-41_abundance-double-mutant.csv"
 
@@ -32,18 +35,9 @@ df <- read.csv(input_path, stringsAsFactors = FALSE)
 # knitr::kable(df)
 ```
 
-
-
-
-
-
-
-
-
-
 ### 2. Plot total mRNA abundance per strain
-```{r echo=TRUE, warning=FALSE}
 
+``` r
 # Define the custom order for subdirectories
 custom_order <- c( "2-cell_wDMP91_bright",  "2-cell_DG5965_bright", "2-cell_wDMP91_dark", "2-cell_DG5965_dark",  "4-cell_wDMP91_bright", "4-cell_DG5965_bright", "4-cell_wDMP91_dark", "4-cell_DG5965_dark")
 
@@ -105,26 +99,19 @@ p <- ggplot(df, aes(x = subdirectory, y = `lin_41_mRNA_molecules`, fill = subdir
 
 # Display the plot
 print(p)
+```
 
+![](Fig5_lin-41-smFOX_SPN4-double_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
+``` r
 # Save the plot as SVG with the date in the filename
 ggsave(("../03_output/Fig6_lin41_smFOX_SPN4-double-violin-plot.svg"),
        p, width = 10, height = 6)
-    
 ```
 
-
-
-
-
-
-
-
-
-
 ### 3. Plot mean abundace of groups across cell stages
-```{r  warning=FALSE, message = FALSE} 
 
+``` r
 # Calculate the mean abundance for each combination of cell stage and strain
 mean_data <- df %>%
   group_by(Cell_Stage, Strain) %>%
@@ -148,22 +135,24 @@ p <- ggplot(mean_data, aes(x = Cell_Stage, y = mean_abundance, color = Strain)) 
 
 # Display the plot
 print(p)
+```
 
+![](Fig5_lin-41-smFOX_SPN4-double_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+``` r
 # Save the plot as SVG with the date in the filename
 ggsave(("../03_output/Fig6_lin41_smFOX_SPN4-double-mean-abundance-line-plot.svg"),
        p, width = 10, height = 6)
-    
-
 ```
 
-
-
 #### 4. Statistical analysis
-### 4A. Normally distributed data
-ANOVA: is there a difference amongst the groups?
-Tukey test: Which groups are different?
 
-```{r echo=TRUE, warning=FALSE}
+### 4A. Normally distributed data
+
+ANOVA: is there a difference amongst the groups? Tukey test: Which
+groups are different?
+
+``` r
 # Test if there are differences ( dev. stage + strain)
 
 # Perform ANOVA
@@ -207,16 +196,18 @@ output_path <- "../03_output/Fig6_lin41_smFOX_SPN4-double_tukey_posthoc_results.
 write.csv(tukey_df, file = output_path, row.names = FALSE)
 
 # knitr::kable(tukey_df)
-
 ```
 
 ### 4B. Non-normally distributed data
-Shapiro-Wilk: To check if your data in each group is normally distributed. If norma you might use ANOVA.
-Kruskal-Wallis (non-parametric version of ANOVA): Check if any of the groups are significantly different from each other.
-Dunn’s test (non-parametric post-hoc test): Compare all pairs of groups to find out what groups are different. 
 
-```{r warning=FALSE}
+Shapiro-Wilk: To check if your data in each group is normally
+distributed. If norma you might use ANOVA. Kruskal-Wallis
+(non-parametric version of ANOVA): Check if any of the groups are
+significantly different from each other. Dunn’s test (non-parametric
+post-hoc test): Compare all pairs of groups to find out what groups are
+different.
 
+``` r
 # Run the Shapiro-Wilk test for normality on each group
 shapiro_df <- df %>%
   group_by(subdirectory) %>%
@@ -250,6 +241,4 @@ if (kruskal_test_results$p < 0.05) {
   cat("No significant differences among groups based on the Kruskal-Wallis test.\n")
 }
 # knitr::kable(dunn_df)
-
 ```
-
