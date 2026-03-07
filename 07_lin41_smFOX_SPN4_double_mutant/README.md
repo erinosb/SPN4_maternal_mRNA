@@ -1,4 +1,4 @@
-Fig6_lin-41-smFOX_SPN4-double_mutant
+# 07 Double mutant analysis of lin-41 3'UTRs small Fox deletion and spn-4 null mutations
 ================
 Naly Torres
 2025-08-04
