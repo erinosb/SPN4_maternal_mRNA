@@ -1,0 +1,290 @@
+---
+title: "Assessing the single-cell specific abundance of lin-41 and set-3 from early embryonic cells"
+author: "Erin Nishimura"
+date: "February 9, 2026"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 4
+---
+
+
+The purpose of this script is to assess the abundance of lin-41 mRNA and set-3 mRNA, not on a whole embryo level, but on a cell-specific level. The wormLib package currently tabulates smFISH microscopy images for abundance based on individual blastomeres for 2-cell and 4-cell stage embryos. Beyond this, the cells are too difficult to differentiate without additional markers.
+
+This project is being conducted in the revisions of the Spike et al manuscript.
+
+This analysis will appear in Figure 2 of Spike et al.
+
+# Load required packages
+
+  * tidyverse
+  * gridExtra
+  
+
+```{r echo=FALSE, warning=FALSE, message=FALSE} 
+
+library(tidyverse)
+library(gridExtra)
+
+```
+
+
+# Import smFISH abundance data
+
+  * This is output from wormLib (bigFISH)
+
+```{r importFISH, echo=TRUE, warning = FALSE, message = FALSE}
+
+# read in the mRNA abundance data from smFISH quantifications:
+FISH <- read.csv(file = "../01_input/combined_cell_data.csv")
+
+# peek at the data:
+head(FISH)
+
+# data structure:
+str(FISH)
+
+```
+
+# Reformat the smFISH abundance data
+
+  1. There is an issue where ABp cells are listed as ABb cells. Fix it.
+  2. Pivot longer to unify mRNA columns
+  3. Add lineage info 
+  4. Select only desired columns 
+  5. Set factors 
+
+```{r, echo=TRUE, warning = FALSE, message = FALSE}
+
+# === 1. There is an issue where ABp cells are listed as ABb cells. Fix it. ===
+FISH <- FISH %>%
+  mutate(label = case_when(label == "ABb" ~ "ABp" , .default = label))
+unique(FISH$label)
+
+# === 2. Pivot longer to unify mRNA columns ===
+FISH_long <- FISH %>%
+  pivot_longer(
+    cols = ends_with("_mRNA"),
+    names_to = "mRNA_name",
+    values_to = "abundance"
+  )
+
+# === 3. Add lineage info ===
+FISH_long <- FISH_long %>%
+  mutate(
+    lineage = case_when(
+      label %in% c("AB", "ABa", "ABp", "EMS") ~ "Somatic",
+      label %in% c("P1", "P2", "P3", "P4") ~ "Germline",
+      TRUE ~ NA_character_
+    ),
+    lineage = factor(lineage, levels = c("Somatic", "Germline"))  # Force order
+  )
+
+# === 4. Select only desired columns ===
+FISH_filtered <- FISH_long %>%
+  select(ImageID, label, rep, cell_stage, mRNA_name, abundance, lineage) %>%
+  filter(!is.na(abundance))
+
+# === 5. Set factors ===
+FISH_filtered$ImageID <- factor(FISH_filtered$ImageID)
+FISH_filtered$label <- factor(FISH_filtered$label, level = c("AB", "P1", "ABa", "ABp", "EMS", "P2"))
+FISH_filtered$mRNA_name <- factor(FISH_filtered$mRNA_name)
+FISH_filtered$cell_stage <- factor(FISH_filtered$cell_stage)
+
+# Final dataset
+head(FISH_filtered)
+str(FISH_filtered)
+
+```
+
+# Import the cell size metrics
+
+  * These were part of the WormLib (bigFISH) output
+  * Import cell sizes
+  * Calculate mean cell volume per cell type
+  * Merge cell volume data with the FISH Abundance data
+
+```{r importsizes, echo=TRUE, warning = FALSE, message = FALSE}
+
+# Read in cell size estimates
+cellsizes <- read.table(file = "../01_input/260209_merged_output_cellsizes_shorter.txt", header = TRUE)
+head(cellsizes)
+
+# Merge the FISH Abundance with the cell sizes data:
+FISHcounts_with_sizes <- left_join(FISH_filtered, cellsizes)
+
+#print(FISHcounts_with_sizes, n = 214, keep = TRUE)
+
+# Calculate the mean size of each cell type
+size_per_cell <- FISHcounts_with_sizes %>%
+  group_by(label) %>%
+  summarise(circumference = mean(perimeter, na.rm = TRUE)) %>%
+  mutate(volume = circumference^3 / 6*(pi^2) )
+
+# append the mean cell circumferences and volumes associated with each cell type back into the FISH_counts_with_sizes data:
+FISHcounts_total_sizes <- left_join(FISHcounts_with_sizes, size_per_cell)
+FISHcounts_total_sizes$ImageID <- factor(FISHcounts_total_sizes$ImageID)
+FISHcounts_total_sizes$label <- factor(FISHcounts_total_sizes$label, level = c("AB", "P1", "ABa", "ABp", "EMS", "P2"))
+
+head(FISHcounts_total_sizes)
+dim(FISHcounts_total_sizes)
+
+
+```
+
+# Filter by lin-41 counts and plot
+
+```{r lin41, echo=TRUE, warning = FALSE, message = FALSE}
+
+# Filter by lin-41
+lin41_selection <- FISHcounts_total_sizes %>%
+  filter(mRNA_name == "lin41_mRNA")
+
+# Are there any unmatched entries?
+unmatched <- lin41_selection %>%
+  filter(is.na(perimeter))
+length(unique(unmatched$ImageID))
+
+# 0
+
+# Divide the abundance by the volume:
+scaled_lin41_selection <- lin41_selection %>%
+  mutate(abundance_by_vol = abundance / volume)
+
+print(scaled_lin41_selection, width = Inf)
+
+# Plot abundance scaled by estimated cell type volume 
+
+u <- ggplot(scaled_lin41_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
+    geom_boxplot() +
+    geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
+    labs(title = "lin-41 mRNA abundance by volume",
+       x = "Cell Identity",
+       y = "lin-41 mRNA, relative concentration per volume")
+u
+
+```
+
+
+# Filter by set-3 counts and plot
+
+```{r set3, echo=TRUE, warning = FALSE, message = FALSE}
+
+# Filter by lin-41
+set3_selection <- FISHcounts_total_sizes %>%
+  filter(mRNA_name == "set3_mRNA")
+
+#dim(set3_selection)
+# 106 rows
+
+# Divide the abundance by the volume:
+scaled_set3_selection <- set3_selection %>%
+  mutate(abundance_by_vol = abundance / volume)
+
+#print(scaled_set3_selection, width = Inf)
+
+# Plot abundance scaled by estimated cell type volume 
+
+v <- ggplot(scaled_set3_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
+    geom_boxplot() +
+    geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
+    labs(title = "set-3 mRNA abundance by volume",
+       x = "Cell Identity",
+       y = "set-3 mRNA, relative concentration per volume")
+v
+
+```
+
+# Print and save relevant plots
+
+This will be included as Figure 2C
+
+```{r printplots, , echo = TRUE, message = FALSE, warning = FALSE}
+
+# Set today's date
+today <- format(Sys.Date(), "%y%m%d")
+
+# set plotname
+filename <- paste("../03_output/", today, "_scaled_boxplots.pdf", sep = "")
+
+# save pdf
+pdf(filename, width = 10, height = 6)
+
+grid.arrange(u, v, ncol = 2)
+
+dev.off()
+
+
+```
+
+# Export data tables
+
+```{r printplots, , echo = TRUE, message = FALSE, warning = FALSE}
+
+# Merge teh lin-41 and set-3 data together
+lin41_and_set3_selection <- rbind(scaled_lin41_selection, scaled_set3_selection)
+
+lin41_selection$mRNA_name
+dim(lin41_and_set3_selection)
+colnames(lin41_and_set3_selection)
+head(lin41_and_set3_selection)
+# Split out the date:
+lin41_and_set3_selection$rep
+
+lin41_and_set3_selection2 <- lin41_and_set3_selection %>%
+  mutate(date = substr(lin41_and_set3_selection$ImageID, 0, 6)) %>%
+  select(ImageID, date, mRNA_name, cell_stage, label, lineage, abundance, perimeter, major_axis_length, minor_axis_length, circumference, volume, abundance_by_vol)
+
+lin41_and_set3_selection2$date <- as.factor(lin41_and_set3_selection2$date)
+lin41_and_set3_selection2$mRNA_name <- droplevels(lin41_and_set3_selection2$mRNA_name )
+
+lin41_and_set3_selection2
+
+# Calculate the n-values per stage and transcript type
+nvalues <- lin41_and_set3_selection2 %>%
+  select(cell_stage, mRNA_name) 
+
+# Convert to a data frame
+ntable <- table(nvalues)
+as.data.frame(ntable)
+
+# Calculate the rep-values per stage and transcript type
+repvalues <- lin41_and_set3_selection2 %>%
+  select(date, mRNA_name)
+
+# Convert to a data frame
+reptable <- table(repvalues)
+as.data.frame(reptable)
+
+
+# Set today's date
+today <- format(Sys.Date(), "%y%m%d")
+
+# set raw data filename - lin-41 and set-3
+filename <- paste("../04_data/", today, "_dataTables_Figure2C.txt", sep = "")
+# save raw data - lin-41 and set-3
+write.table(lin41_and_set3_selection2, file = filename, quote = FALSE)
+
+# set filename - n-values
+filename2 <- paste("../04_data/", today, "_n_values_Figure2C.txt", sep = "")
+# save n-values
+write.table(as.data.frame(ntable), file = filename2, quote = FALSE)
+
+# set filename - n-values
+filename3 <- paste("../04_data/", today, "_rep_values_Figure2C.txt", sep = "")
+# save n-values
+write.table(as.data.frame(reptable), file = filename3, quote = FALSE)
+
+
+
+```
+
+
+# Session info
+
+```{r}
+
+sessionInfo()
+
+```
+
