@@ -36,7 +36,7 @@ Click on the links below (or directories above) to navigate to each directory:
 
 ### [04 mRNA abundance of SPN-4 putative target transcripts changes in spn-4 null mutants](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/04_spn4_null_smFISH)
 
-### 05 clearance of lin-41 mRNA is blastomere and lineage-dependent
+### [05 clearance of lin-41 mRNA is blastomere and lineage-dependent](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/05_blastomere_specific_smFISH_analysis)
 
 ### [06 lin-41 3'UTR bashing analysis](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/06_lin41_3UTR_bashing)
 
