@@ -1,24 +1,28 @@
----
-title: "Fig5_chs-1_smFOX"
-author: "Naly Torres"
-date: "2025-07-22"
-output: 
-  github_document:
-    toc: true
-    toc_depth: 4
----
+Fig8_chs-1_smFOX
+================
+Naly Torres
+2025-07-22
 
-```{r warning=FALSE, message = FALSE} 
+- [1. Read input counts data](#1-read-input-counts-data)
+- [2. Plot total mRNA abundance per
+  strain](#2-plot-total-mrna-abundance-per-strain)
+- [3. Plot mean abundace of groups across cell
+  stages](#3-plot-mean-abundace-of-groups-across-cell-stages)
+  - [4. Statistical analysis](#4-statistical-analysis)
+- [4A. Normally distributed data](#4a-normally-distributed-data)
+  - [more statistics - Check for normality. try other
+    tests](#more-statistics---check-for-normality-try-other-tests)
+
+``` r
 library(knitr)
 library(ggplot2)
 library(dplyr)
 library(rstatix)
 ```
 
-
 ### 1. Read input counts data
-```{r getinput, echo=TRUE, warning=FALSE, message = FALSE}
 
+``` r
 # Define relative input folder path
 input_path <- "../01_input/Fig6_chs-1-abundance_combined_quantification.csv"
 
@@ -29,14 +33,11 @@ df <- read.csv(input_path, stringsAsFactors = FALSE)
 #head(df)
 #str(df)
 # knitr::kable(df)
-
-
-
 ```
 
-
 ### 2. Plot total mRNA abundance per strain
-```{r echo=TRUE, warning=FALSE}
+
+``` r
 # Define the custom order for subdirectories
 custom_order <- c("2-cell_N2","2-cell_DG5972", "4-cell_N2", "4-cell_DG5972")
 
@@ -75,22 +76,19 @@ p <- ggplot(df, aes(x = factor(subdirectory, levels = custom_order), y = `chs_1_
 
 # Display the plot
 print(p)
+```
 
+![](Fig6_chs-1_abundance_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
 # Save the plot as PNG with the date in the filename
 ggsave(("../03_output/Fig5_chs-1-smFOX-mRNA-abundance-violin-plot.png"),
        p, width = 10, height = 6)
-       
-       
-
-
 ```
 
-
-
-
 ### 3. Plot mean abundace of groups across cell stages
-```{r  warning=FALSE, message = FALSE} 
 
+``` r
 # Calculate the mean abundance for each combination of cell stage and strain
 mean_data <- df %>%
   group_by(Cell_Stage, Strain) %>%
@@ -113,23 +111,24 @@ p <- ggplot(mean_data, aes(x = Cell_Stage, y = mean_abundance, color = Strain)) 
 
 # Display the plot
 print(p)
+```
 
+![](Fig6_chs-1_abundance_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+``` r
 # Save the plot as PNG with the date in the filename
 ggsave(("../03_output/Fig5_chs-1-smFOX-mRNA-abundance-line-plot.png"),
        p, width = 10, height = 6)
-    
-
 ```
 
-
-
-
 #### 4. Statistical analysis
-### 4A. Normally distributed data
-ANOVA: is there a difference amongst the groups?
-Tukey test: Which groups are different?
 
-```{r echo=TRUE, warning=FALSE}
+### 4A. Normally distributed data
+
+ANOVA: is there a difference amongst the groups? Tukey test: Which
+groups are different?
+
+``` r
 # Test significantly differences in chs-1 mRNA abundance between each "subdirectory" ( dev. stage + strain)
 # Perform ANOVA
 anova_result <- aov(`chs_1_mRNA_total_molecules` ~ subdirectory, data = df)
@@ -168,18 +167,18 @@ tukey_df <- tukey_df[, c("Comparison", setdiff(names(tukey_df), "Comparison"))]
 output_path <- "../03_output/Fig5_chs-1-smFOX-mRNA-abundance_tukey_posthoc_results.csv"
 write.csv(tukey_df, file = output_path, row.names = FALSE)
 # knitr::kable(tukey_df)
-
-
-
 ```
 
 #### more statistics - Check for normality. try other tests
-Shapiro-Wilk: To check if your data in each group is normally distributed. If norma you might use ANOVA.
-Kruskal-Wallis (non-parametric version of ANOVA): Check if any of the groups are significantly different from each other.
-Dunn’s test (non-parametric post-hoc test): Compare all pairs of groups to find out what groups are different. 
 
-```{r echo=TRUE, warning=FALSE,  message = FALSE}
+Shapiro-Wilk: To check if your data in each group is normally
+distributed. If norma you might use ANOVA. Kruskal-Wallis
+(non-parametric version of ANOVA): Check if any of the groups are
+significantly different from each other. Dunn’s test (non-parametric
+post-hoc test): Compare all pairs of groups to find out what groups are
+different.
 
+``` r
 # Run the Shapiro-Wilk test for normality on each group
 shapiro_df <- df %>%
   group_by(subdirectory) %>%
@@ -214,12 +213,10 @@ if (kruskal_test_results$p < 0.05) {
   cat("No significant differences among groups based on the Kruskal-Wallis test.\n")
 }
 # knitr::kable(dunn_df)
-
 ```
 
+Based Shapiro-Wilk p-value, groups 2-cell_N2, 2-cell_DG3913, and
+2-cell_DG5410 are not normal.
 
-Based Shapiro-Wilk p-value, groups 2-cell_N2, 2-cell_DG3913, and  2-cell_DG5410 are not normal.
-
-kruskal_test_results p < 0.0001 show statistically significant difference between the groups in terms of mRNA molecule counts.
-
-
+kruskal_test_results p \< 0.0001 show statistically significant
+difference between the groups in terms of mRNA molecule counts.
