@@ -1,4 +1,4 @@
-## Fig6_lin-41-abundance-double
+## Fig7_lin-41-abundance-double
 ================
 Naly Torres
 2025-08-04
@@ -231,7 +231,7 @@ if (kruskal_test_results$p < 0.05) {
 # knitr::kable(dunn_df)
 ```
 
-## FigS6B_lin41_smFOX_SPN4_double_controls
+## FigS11_lin41_smFOX_SPN4_double_controls
 ================
 Naly Torres
 2025-08-04
