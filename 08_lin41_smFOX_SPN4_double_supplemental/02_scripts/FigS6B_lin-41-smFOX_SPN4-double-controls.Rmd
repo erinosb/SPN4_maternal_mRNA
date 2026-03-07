@@ -2,7 +2,10 @@
 title: "FigS6B_lin41_smFOX_SPN4_double_controls"
 author: "Naly Torres"
 date: "2025-08-04"
-output: word_document
+output: 
+  github_document:
+    toc: true
+    toc_depth: 4
 ---
 
 ```{r warning=FALSE, message = FALSE} 
@@ -25,7 +28,7 @@ df <- read.csv(input_path, stringsAsFactors = FALSE)
 # Check data
 #head(df)
 #str(df)
-knitr::kable(df)
+# knitr::kable(df)
 ```
 
 
@@ -170,7 +173,7 @@ tukey_df <- tukey_df[, c("Comparison", setdiff(names(tukey_df), "Comparison"))]
 # Save to CSV
 output_path <- "../03_output/FigS6B_smFOX_SPN4_double_controls_tukey_posthoc_results.csv"
 write.csv(tukey_df, file = output_path, row.names = FALSE)
-knitr::kable(tukey_df)
+# knitr::kable(tukey_df)
 
 ```
 
@@ -191,7 +194,7 @@ shapiro_df <- df %>%
 # Save Shapiro-Wilk results
 shapiro_path <- "../03_output/FigS6B_smFOX_SPN4_double_controls_shapiro_results.csv"
 write.csv(shapiro_df, shapiro_path, row.names = FALSE)
-knitr::kable(shapiro_df)
+# knitr::kable(shapiro_df)
 
 
 # If normality assumptions are violated, use non-parametric tests
@@ -204,7 +207,7 @@ kruskal_df <- as.data.frame(kruskal_test_results)
 
 kruskal_path <- "../03_output/FigS6B_smFOX_SPN4_double_controls_kruskal_test_results.csv"
 write.csv(kruskal_df, kruskal_path, row.names = FALSE)
-knitr::kable(kruskal_df)
+# knitr::kable(kruskal_df)
 
 
 # Perform Dunn's post-hoc test if Kruskal-Wallis is significant
@@ -217,7 +220,7 @@ if (kruskal_test_results$p < 0.05) {
 } else {
   cat("No significant differences among groups based on the Kruskal-Wallis test.\n")
 }
-knitr::kable(dunn_df)
+# knitr::kable(dunn_df)
 
 ```
 

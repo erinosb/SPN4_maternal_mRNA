@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='UTF-8' ?>
-<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' class='svglite' width='720.00pt' height='432.00pt' viewBox='0 0 720.00 432.00'>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='720.00pt' height='432.00pt' viewBox='0 0 720.00 432.00'>
+<g class='svglite'>
 <defs>
   <style type='text/css'><![CDATA[
     .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
@@ -12,6 +13,10 @@
     .svglite text {
       white-space: pre;
     }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
   ]]></style>
 </defs>
 <rect width='100%' height='100%' style='stroke: none; fill: none;'/>
@@ -23,44 +28,45 @@
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw0MzIuMDA=)'>
 </g>
 <defs>
-  <clipPath id='cpNDcuOTZ8NjEwLjE2fDIzLjM0fDQwMC4yNw=='>
-    <rect x='47.96' y='23.34' width='562.21' height='376.93' />
+  <clipPath id='cpNDcuODB8NjEwLjIwfDIzLjE4fDQwMC41MA=='>
+    <rect x='47.80' y='23.18' width='562.40' height='377.33' />
   </clipPath>
 </defs>
-<g clip-path='url(#cpNDcuOTZ8NjEwLjE2fDIzLjM0fDQwMC4yNw==)'>
-<polyline points='47.96,326.18 610.16,326.18 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='47.96,235.26 610.16,235.26 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='47.96,144.35 610.16,144.35 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='47.96,53.43 610.16,53.43 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='47.96,371.64 610.16,371.64 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='47.96,280.72 610.16,280.72 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='47.96,189.80 610.16,189.80 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='47.96,98.89 610.16,98.89 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='201.28,400.27 201.28,23.34 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<polyline points='456.83,400.27 456.83,23.34 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
-<circle cx='201.28' cy='115.90' r='1.95' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
-<circle cx='456.83' cy='383.13' r='1.95' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
-<circle cx='201.28' cy='40.47' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
-<circle cx='456.83' cy='338.38' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
+<g clip-path='url(#cpNDcuODB8NjEwLjIwfDIzLjE4fDQwMC41MA==)'>
+<polyline points='47.80,326.34 610.20,326.34 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='47.80,235.33 610.20,235.33 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='47.80,144.31 610.20,144.31 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='47.80,53.30 610.20,53.30 ' style='stroke-width: 0.53; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='47.80,371.84 610.20,371.84 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='47.80,280.83 610.20,280.83 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='47.80,189.82 610.20,189.82 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='47.80,98.81 610.20,98.81 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='201.18,400.50 201.18,23.18 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<polyline points='456.82,400.50 456.82,23.18 ' style='stroke-width: 1.07; stroke: #EBEBEB; stroke-linecap: butt;' />
+<circle cx='201.18' cy='115.84' r='1.95' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
+<circle cx='456.82' cy='383.35' r='1.95' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
+<circle cx='201.18' cy='40.33' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
+<circle cx='456.82' cy='338.56' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw0MzIuMDA=)'>
-<text x='43.02' y='374.79' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='19.58px' lengthAdjust='spacingAndGlyphs'>8000</text>
-<text x='43.02' y='283.87' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='24.48px' lengthAdjust='spacingAndGlyphs'>10000</text>
-<text x='43.02' y='192.96' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='24.48px' lengthAdjust='spacingAndGlyphs'>12000</text>
-<text x='43.02' y='102.04' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='24.48px' lengthAdjust='spacingAndGlyphs'>14000</text>
-<text x='201.28' y='411.50' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='21.02px' lengthAdjust='spacingAndGlyphs'>2-cell</text>
-<text x='456.83' y='411.50' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='21.02px' lengthAdjust='spacingAndGlyphs'>4-cell</text>
-<text x='329.06' y='424.09' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='50.75px' lengthAdjust='spacingAndGlyphs'>Cell Stage</text>
-<text transform='translate(13.37,211.80) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='150.44px' lengthAdjust='spacingAndGlyphs'>Mean lin-41 mRNA abundance</text>
-<text x='626.60' y='195.73' style='font-size: 11.00px; font-family: "Arial";' textLength='28.74px' lengthAdjust='spacingAndGlyphs'>Strain</text>
-<line x1='628.33' y1='211.06' x2='642.15' y2='211.06' style='stroke-width: 1.07; stroke: #F8766D; stroke-linecap: butt;' />
-<circle cx='635.24' cy='211.06' r='1.95' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
-<line x1='628.33' y1='211.06' x2='642.15' y2='211.06' style='stroke-width: 1.07; stroke: #F8766D; stroke-linecap: butt;' />
-<line x1='628.33' y1='228.34' x2='642.15' y2='228.34' style='stroke-width: 1.07; stroke: #00BFC4; stroke-linecap: butt;' />
-<circle cx='635.24' cy='228.34' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
-<line x1='628.33' y1='228.34' x2='642.15' y2='228.34' style='stroke-width: 1.07; stroke: #00BFC4; stroke-linecap: butt;' />
-<text x='649.36' y='214.22' style='font-size: 8.80px; font-family: "Arial";' textLength='32.77px' lengthAdjust='spacingAndGlyphs'>DG5919</text>
-<text x='649.36' y='231.50' style='font-size: 8.80px; font-family: "Arial";' textLength='59.68px' lengthAdjust='spacingAndGlyphs'>DG5965_bright</text>
-<text x='47.96' y='14.94' style='font-size: 13.20px; font-family: "Arial";' textLength='283.77px' lengthAdjust='spacingAndGlyphs'>Mean Abundance of lin-41 mRNA per Cell Stage</text>
+<text x='42.87' y='374.99' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='19.56px' lengthAdjust='spacingAndGlyphs'>8000</text>
+<text x='42.87' y='283.98' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='24.45px' lengthAdjust='spacingAndGlyphs'>10000</text>
+<text x='42.87' y='192.97' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='24.45px' lengthAdjust='spacingAndGlyphs'>12000</text>
+<text x='42.87' y='101.96' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='24.45px' lengthAdjust='spacingAndGlyphs'>14000</text>
+<text x='201.18' y='411.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='21.02px' lengthAdjust='spacingAndGlyphs'>2-cell</text>
+<text x='456.82' y='411.74' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arial";' textLength='21.02px' lengthAdjust='spacingAndGlyphs'>4-cell</text>
+<text x='329.00' y='424.20' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='50.78px' lengthAdjust='spacingAndGlyphs'>Cell Stage</text>
+<text transform='translate(13.36,211.84) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arial";' textLength='149.89px' lengthAdjust='spacingAndGlyphs'>Mean lin-41 mRNA abundance</text>
+<text x='626.64' y='195.76' style='font-size: 11.00px; font-family: "Arial";' textLength='28.75px' lengthAdjust='spacingAndGlyphs'>Strain</text>
+<line x1='628.37' y1='211.04' x2='642.19' y2='211.04' style='stroke-width: 1.07; stroke: #F8766D; stroke-linecap: butt;' />
+<circle cx='635.28' cy='211.04' r='1.95' style='stroke-width: 0.71; stroke: #F8766D; fill: #F8766D;' />
+<line x1='628.37' y1='211.04' x2='642.19' y2='211.04' style='stroke-width: 1.07; stroke: #F8766D; stroke-linecap: butt;' />
+<line x1='628.37' y1='228.32' x2='642.19' y2='228.32' style='stroke-width: 1.07; stroke: #00BFC4; stroke-linecap: butt;' />
+<circle cx='635.28' cy='228.32' r='1.95' style='stroke-width: 0.71; stroke: #00BFC4; fill: #00BFC4;' />
+<line x1='628.37' y1='228.32' x2='642.19' y2='228.32' style='stroke-width: 1.07; stroke: #00BFC4; stroke-linecap: butt;' />
+<text x='649.40' y='214.19' style='font-size: 8.80px; font-family: "Arial";' textLength='32.77px' lengthAdjust='spacingAndGlyphs'>DG5919</text>
+<text x='649.40' y='231.47' style='font-size: 8.80px; font-family: "Arial";' textLength='59.64px' lengthAdjust='spacingAndGlyphs'>DG5965_bright</text>
+<text x='47.80' y='14.93' style='font-size: 13.20px; font-family: "Arial";' textLength='282.08px' lengthAdjust='spacingAndGlyphs'>Mean Abundance of lin-41 mRNA per Cell Stage</text>
+</g>
 </g>
 </svg>
