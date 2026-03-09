@@ -1138,7 +1138,7 @@ dev.off()
 
 ### z-scored lineplots - all RBP categories
 
-```{r AlLZscoredLineplots, echo = FALSE, message = FALSE, warning = FALSE} 
+```{r AlLZscoredLineplots, echo = TRUE, message = FALSE, warning = FALSE} 
 
 clustered_scaled_wide_ann2
 

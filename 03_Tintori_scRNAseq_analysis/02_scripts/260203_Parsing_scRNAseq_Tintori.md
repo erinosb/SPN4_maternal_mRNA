@@ -37,15 +37,17 @@
     - [Save the barplot (% SPN-4 associated mRNAs in each
       clusteer)](#save-the-barplot--spn-4-associated-mrnas-in-each-clusteer)
     - [Save the mosaic plot](#save-the-mosaic-plot)
-  - [Lineplots, split by cluster set](#lineplots-split-by-cluster-set)
-  - [Playing around with a different cell
-    order](#playing-around-with-a-different-cell-order)
   - [Additional plots](#additional-plots)
     - [Calculate the clusters that are represented in SPN-4-bound versus
       un-bound
       categories](#calculate-the-clusters-that-are-represented-in-spn-4-bound-versus-un-bound-categories)
     - [Save SPN-4 bound v. unbound stacked, proportional
       barplot](#save-spn-4-bound-v-unbound-stacked-proportional-barplot)
+    - [Merge datasets for upcoming lineplots of abundance in the Tintori
+      dataset, split out by cluster or by RBP
+      Association](#merge-datasets-for-upcoming-lineplots-of-abundance-in-the-tintori-dataset-split-out-by-cluster-or-by-rbp-association)
+    - [Playing around with a different cell
+      order](#playing-around-with-a-different-cell-order)
     - [What is the variance of gene expression over developmental
       time?](#what-is-the-variance-of-gene-expression-over-developmental-time)
     - [Output the mean by lineage -
@@ -1247,36 +1249,6 @@ dev.off()
     ## quartz_off_screen 
     ##                 2
 
-## Lineplots, split by cluster set
-
-Merge datasets for upcoming lineplots of abundance in the Tintori
-dataset, split out by cluster or by RBP Association
-
-``` r
-############ CREATE LINEPLOTS group_by IP #############
-
-# start with clustered_changing_wide_df and annotate with ann2 using left_join
-#head(clustered_changing_wide_df)
-#head(ann2)
-
-clustered_changing_wide_ann2 <- left_join(rownames_to_column(clustered_changing_wide_df), rownames_to_column(ann3))
-clustered_changing_wide_ann2 <- column_to_rownames(clustered_changing_wide_ann2) 
-clustered_changing_wide_ann2 <- clustered_changing_wide_ann2 %>%
-  select(!(cluster:cluster_set))
-```
-
-------------------------------------------------------------------------
-
-## Playing around with a different cell order
-
-``` r
-#clustered_changing_wide_df
-#clustered_changing_wide_ann2
-#mean_by_IP
-
-lineageOrder <- c("IP", "P0", "P1", "P2", "P3", "P4", "AB", "ABa", "ABp", "ABal", "ABar", "ABpl", "ABpr", "ABalx", "ABarx", "ABplx", "ABprx", "EMS", "E", "Ea", "Ep", "MS", "MSx1", "MSx2", "C", "Cx1", "Cx2", "D")
-```
-
 ## Additional plots
 
 These plots were developed as part of the first set of revisions to
@@ -1347,24 +1319,51 @@ ann3_tabs_long_spn4bound %>%
     ## quartz_off_screen 
     ##                 2
 
+### Merge datasets for upcoming lineplots of abundance in the Tintori dataset, split out by cluster or by RBP Association
+
+``` r
+############ CREATE LINEPLOTS group_by IP #############
+
+# start with clustered_changing_wide_df and annotate with ann2 using left_join
+#head(clustered_changing_wide_df)
+#head(ann2)
+
+clustered_changing_wide_ann2 <- left_join(rownames_to_column(clustered_changing_wide_df), rownames_to_column(ann3))
+clustered_changing_wide_ann2 <- column_to_rownames(clustered_changing_wide_ann2) 
+clustered_changing_wide_ann2 <- clustered_changing_wide_ann2 %>%
+  select(!(cluster:cluster_set))
+```
+
+------------------------------------------------------------------------
+
+### Playing around with a different cell order
+
+``` r
+#clustered_changing_wide_df
+#clustered_changing_wide_ann2
+#mean_by_IP
+
+lineageOrder <- c("IP", "P0", "P1", "P2", "P3", "P4", "AB", "ABa", "ABp", "ABal", "ABar", "ABpl", "ABpr", "ABalx", "ABarx", "ABplx", "ABprx", "EMS", "E", "Ea", "Ep", "MS", "MSx1", "MSx2", "C", "Cx1", "Cx2", "D")
+```
+
 ### What is the variance of gene expression over developmental time?
 
 In response to a reviewer comment that we did not include individual
-lineplots for genes or a measure of the data’s spread.
+lineplots for genes or a measure of the data’s spread. \* How can we
+illustrate the range of the data? \* First pass - try to plot standard
+deviation. This was tricky because the y-coordinates became so large
+that the trends were not as visible. Most of the issue had to do with
+the fact that some genes are highly expressed and some genes were lowly
+expressed. \* To improve this plot, we would need to z-scale it, then
+apply standard deviation. It would also be necessary to re-do the
+faceting. Maybe if we reduced the number of plots down from each
+possible IP combination to SPN-4 associated v. SPN-4 unassociated? \*
+Second pass - try to make a transparent all line plot. This was tricky
+because, again, the range of expression levels was so drastically
+different from gene-to-gene. \* To improve this plot, we would need to
+z-scale.
 
-- How can we illustrate the range of the data?
-- First pass - try to plot standard deviation. This was tricky because
-  the y-coordinates became so large that the trends were not as visible.
-  Most of the issue had to do with the fact that some genes are highly
-  expressed and some genes were lowly expressed.
-  - To improve this plot, we would need to z-scale it, then apply
-    standard deviation. It would also be necessary to re-do the
-    faceting. Maybe if we reduced the number of plots down from each
-    possible IP combination to SPN-4 associated v. SPN-4 unassociated?
-- Second pass - try to make a transparent all line plot. This was tricky
-  because, again, the range of expression levels was so drastically
-  different from gene-to-gene.
-  - To improve this plot, we would need to z-scale.
+    ## Lineplots, split by cluster set
 
 ``` r
 ############ CREATE LINEPLOTS group_by IP #############
@@ -1491,6 +1490,10 @@ table(ann3_tabs_long_spn4bound$RBP_bound)
     ##                 2
 
 ### z-scored lineplots - all RBP categories
+
+``` r
+clustered_scaled_wide_ann2
+```
 
     ##                        P0            AB            P1           ABa
     ## 2L52.1      -0.5270882856 -0.3732763780 -0.4139171328 -0.3571090705
@@ -26498,6 +26501,14 @@ table(ann3_tabs_long_spn4bound$RBP_bound)
     ## F59A1.t1                  none
     ##  [ reached 'max' / getOption("max.print") -- omitted 9212 rows ]
 
+``` r
+z_mean_by_RBP <- as.data.frame(clustered_scaled_wide_ann2) %>%
+  group_by(IP) %>%
+  summarise_all(mean)
+
+z_mean_by_RBP
+```
+
     ## # A tibble: 8 × 28
     ##   IP             P0     AB       P1    ABa    ABp    EMS      P2    ABal    ABar
     ##   <fct>       <dbl>  <dbl>    <dbl>  <dbl>  <dbl>  <dbl>   <dbl>   <dbl>   <dbl>
@@ -26512,6 +26523,12 @@ table(ann3_tabs_long_spn4bound$RBP_bound)
     ## # ℹ 18 more variables: ABpl <dbl>, ABpr <dbl>, C <dbl>, E <dbl>, MS <dbl>,
     ## #   P3 <dbl>, ABalx <dbl>, ABarx <dbl>, ABplx <dbl>, ABprx <dbl>, Cx1 <dbl>,
     ## #   Cx2 <dbl>, D <dbl>, Ea <dbl>, Ep <dbl>, MSx1 <dbl>, MSx2 <dbl>, P4 <dbl>
+
+``` r
+# convert the meanbycluster into longform data to plot using ggplot2:
+z_mean_by_RBP <- as.data.frame(z_mean_by_RBP)
+z_mean_by_RBP
+```
 
     ##                   IP         P0         AB            P1        ABa        ABp
     ## 1             LIN-41 0.54882591 0.46636050  0.3364892868 0.51845029 0.50681620
@@ -26559,9 +26576,46 @@ table(ann3_tabs_long_spn4bound$RBP_bound)
     ## 7 -0.408355899 -0.376579465 -0.41250988  0.58075056
     ## 8  0.008345125 -0.003904999 -0.02455471 -0.08625674
 
+``` r
+dim(z_mean_by_RBP)
+```
+
     ## [1]  8 28
 
+``` r
+longer_z_means_by_RBP <- pivot_longer(z_mean_by_RBP, cols = 2:27, names_to = "cell",
+                                        values_to = "intensity")
+
+# Set cell ID as an ordered factor; set RBP order
+
+longer_z_means_by_RBP$cell <- factor(longer_z_means_by_RBP$cell, levels = lineageOrder[2:28])
+
+longer_z_means_by_RBP$IP <- factor(longer_z_means_by_RBP$IP, levels = c("SPN-4", "LIN-41_SPN-4", "OMA-1_SPN-4", "OMA-1_SPN-4_LIN-41", "LIN-41", "OMA-1", "OMA-1_LIN-41", "none"))
+
+
+# create lineplots of the trend over cell type for each cluster
+# Set color palette
+
+# Set colors
+vcolors = c("#3ab04a", "#97688d", "#39af99", "#664746", "#9c3393", "#2075bc", "#624da0", "darkgrey")
+
+
+# Create Lineplots
+zlineplot_RBP <- ggplot(longer_z_means_by_RBP, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
+  geom_line()+
+  geom_point() +
+  facet_grid(rows = vars(IP)) +
+  scale_color_manual(values=vcolors)
+
+zlineplot_RBP
+```
+
 ![](260203_Parsing_scRNAseq_Tintori_files/figure-gfm/AlLZscoredLineplots-1.png)<!-- -->
+
+``` r
+# Tabulate the number of genes in each category:
+table(factor(clustered_scaled_wide_ann2$IP))
+```
 
     ## 
     ##             LIN-41       LIN-41_SPN-4              OMA-1       OMA-1_LIN-41 
