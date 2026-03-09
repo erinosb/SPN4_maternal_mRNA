@@ -916,128 +916,6 @@ dev.off()
 
 ```
 
-## Lineplots, split by cluster set
-
-Create lineplots of abundance in the Tintori dataset, split out by cluster or by RBP Association
-
-Supplemental Figure
-
-```{r lineplots5, echo = TRUE, message = FALSE, warning = FALSE}
-
-############ CREATE LINEPLOTS group_by IP #############
-
-# start with clustered_changing_wide_df and annotate with ann2 using left_join
-#head(clustered_changing_wide_df)
-#head(ann2)
-
-clustered_changing_wide_ann2 <- left_join(rownames_to_column(clustered_changing_wide_df), rownames_to_column(ann3))
-clustered_changing_wide_ann2 <- column_to_rownames(clustered_changing_wide_ann2) 
-clustered_changing_wide_ann2 <- clustered_changing_wide_ann2 %>%
-  select(!(cluster:cluster_set))
-
-
-#head(clustered_changing_wide_ann2)
-# Create a dataframe that is grouped by the cluster and calculate the mean values of each cell ID across the cluster:
-
-mean_by_IP <- clustered_changing_wide_ann2 %>% 
-  group_by(IP) %>%
-  summarise_all("mean")
-
-# eda 
-#dim(mean_by_IP)
-#mean_by_IP
-mean_by_IP <- as.data.frame(mean_by_IP)
-
-# convert the meanbycluster into longform data to plot using ggplot2:
-longer_means_by_IP <- pivot_longer(mean_by_IP, cols = 2:28, names_to = "cell",
-                                        values_to = "intensity")
-
-# Set cell ID as an ordered factor
-longer_means_by_IP$cell <- factor(longer_means_by_IP$cell, levels = colnames(changing_wide_mat))
-longer_means_by_IP
-# create lineplots of the trend over cell type for each cluster
-lineplot_IP <- ggplot(longer_means_by_IP, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
-  geom_line()+
-  geom_point() +
-  facet_grid(rows = vars(IP))
-
-lineplot_IP
-```
-
-### Save the lineplot
-
-
-```{r lineplotExport, echo = TRUE, message = FALSE, warning = FALSE}
-
-# Save theis plot to annotate the heatmap:
-# 
-# today <- format(Sys.Date(), "%y%m%d")
-# filename5 <- paste("../03_outputPlots/", today, "_IP_lineplots.pdf", sep = "")
-# pdf(filename5, width = 6, height = 6)
-# 
-# lineplot_IP
-
-dev.off()
-
-```
-
-
----- 
-
-## Playing around with a different cell order
-
-
-```{r testing_lineplot_newOrder }
-
-#clustered_changing_wide_df
-#clustered_changing_wide_ann2
-#mean_by_IP
-
-lineageOrder <- c("IP", "P0", "P1", "P2", "P3", "P4", "AB", "ABa", "ABp", "ABal", "ABar", "ABpl", "ABpr", "ABalx", "ABarx", "ABplx", "ABprx", "EMS", "E", "Ea", "Ep", "MS", "MSx1", "MSx2", "C", "Cx1", "Cx2", "D")
-
-
-
-dim(mean_by_IP)
-length(lineageOrder)
-colnames(mean_by_IP[, testOrder])
-
-# mean_by_IP[, testOrder]
-
-# convert the meanbycluster into longform data to plot using ggplot2:
-longer_means_by_IP_2 <- pivot_longer(mean_by_IP[ , testOrder], cols = 2:28, names_to = "cell",
-                                        values_to = "intensity")
-
-
-# Set cell ID as an ordered factor
-longer_means_by_IP_2$cell <- factor(longer_means_by_IP_2$cell, levels = colnames(mean_by_IP)[testOrder])
-
-# Set IP order
-longer_means_by_IP_2$IP <- factor(longer_means_by_IP_2$IP, levels = c("SPN-4", "LIN-41_SPN-4", "OMA-1_SPN-4", "OMA-1_SPN-4_LIN-41", "LIN-41", "OMA-1", "OMA-1_LIN-41", "none"))
-
-# Set colors
-vcolors = c("#3ab04a", "#97688d", "#39af99", "#664746", "#9c3393", "#2075bc", "#624da0", "darkgrey")
-
-# Set 
-
-# create lineplots of the trend over cell type for each cluster
-lineplot_IP_2 <- ggplot(longer_means_by_IP_2, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
-  scale_color_manual(values = vcolors)+
-  geom_line()+
-  geom_point() +
-  facet_grid(rows = vars(IP))
-
-lineplot_IP_2
-
-today <- format(Sys.Date(), "%y%m%d")
-filename5 <- paste("../03_outputPlots/", today, "_IP_lineplots_new_order.pdf", sep = "")
-pdf(filename5, width = 6, height = 6)
-
-lineplot_IP_2
-
-dev.off()
-
-table(clustered_changing_wide_ann2$IP)
-```
 
 ## Additional plots 
 
@@ -1104,15 +982,52 @@ dev.off()
 
 ```
 
+
+### Merge datasets for upcoming lineplots of abundance in the Tintori dataset, split out by cluster or by RBP Association
+
+```{r lineplots5, echo = TRUE, message = FALSE, warning = FALSE}
+
+############ CREATE LINEPLOTS group_by IP #############
+
+# start with clustered_changing_wide_df and annotate with ann2 using left_join
+#head(clustered_changing_wide_df)
+#head(ann2)
+
+clustered_changing_wide_ann2 <- left_join(rownames_to_column(clustered_changing_wide_df), rownames_to_column(ann3))
+clustered_changing_wide_ann2 <- column_to_rownames(clustered_changing_wide_ann2) 
+clustered_changing_wide_ann2 <- clustered_changing_wide_ann2 %>%
+  select(!(cluster:cluster_set))
+
+
+
+```
+
+---- 
+
+### Playing around with a different cell order
+
+
+```{r testing_lineplot_newOrder }
+
+#clustered_changing_wide_df
+#clustered_changing_wide_ann2
+#mean_by_IP
+
+lineageOrder <- c("IP", "P0", "P1", "P2", "P3", "P4", "AB", "ABa", "ABp", "ABal", "ABar", "ABpl", "ABpr", "ABalx", "ABarx", "ABplx", "ABprx", "EMS", "E", "Ea", "Ep", "MS", "MSx1", "MSx2", "C", "Cx1", "Cx2", "D")
+
+
+```
+
 ### What is the variance of gene expression over developmental time? 
 
-In response to a reviewer comment that we did not include individual lineplots for genes or a measure of the data's spread. 
-
-  * How can we illustrate the range of the data?
+In response to a reviewer comment that we did not include individual lineplots for genes or a measure of the data's spread.   * How can we illustrate the range of the data?
   * First pass - try to plot standard deviation. This was tricky because the y-coordinates became so large that the trends were not as visible. Most of the issue had to do with the fact that some genes are highly expressed and some genes were lowly expressed.
     * To improve this plot, we would need to z-scale it, then apply standard deviation. It would also be necessary to re-do the faceting. Maybe if we reduced the number of plots down from each possible IP combination to SPN-4 associated v. SPN-4 unassociated?
   * Second pass - try to make a transparent all line plot. This was tricky because, again, the range of expression levels was so drastically different from gene-to-gene.
     * To improve this plot, we would need to z-scale.
+    
+    ## Lineplots, split by cluster set
+
     
 ```{r zscoredLinePlots, eecho = TRUE, message = TRUE, warning = FALSE} 
 
@@ -1268,6 +1183,24 @@ table(factor(clustered_scaled_wide_ann2$IP))
 
 
 ```
+
+### Save the z-scored lineplots
+
+```{r saveLineplotsZ, echo = FALSE, , message = FALSE, warning = FALSE}
+
+# Save the lineplot:
+
+today <- format(Sys.Date(), "%y%m%d")
+filename5 <- paste("../03_outputPlots/", today, "_IP_lineplots_zscored_row.pdf", sep = "")
+pdf(filename5, width = 6, height = 6)
+
+zlineplot_RBP
+
+dev.off()
+
+
+```
+
 
 
 ### Agilent-style transparent multi-lineplots
