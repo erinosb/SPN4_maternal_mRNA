@@ -1202,7 +1202,6 @@ lineplot_RBP
 # Tabulate the number of genes in each category:
 table(ann3_tabs_long_spn4bound$RBP_bound)
 
-
 ```
 
 ### Output the mean by lineage - z-scored
@@ -1220,6 +1219,56 @@ lineplot_RBP
 dev.off()
 
 ```
+
+
+### z-scored lineplots - all RBP categories
+
+```{r AlLZscoredLineplots, echo = FALSE, message = FALSE, warning = FALSE} 
+
+clustered_scaled_wide_ann2
+
+z_mean_by_RBP <- as.data.frame(clustered_scaled_wide_ann2) %>%
+  group_by(IP) %>%
+  summarise_all(mean)
+
+z_mean_by_RBP
+
+# convert the meanbycluster into longform data to plot using ggplot2:
+z_mean_by_RBP <- as.data.frame(z_mean_by_RBP)
+z_mean_by_RBP
+dim(z_mean_by_RBP)
+longer_z_means_by_RBP <- pivot_longer(z_mean_by_RBP, cols = 2:27, names_to = "cell",
+                                        values_to = "intensity")
+
+# Set cell ID as an ordered factor; set RBP order
+
+longer_z_means_by_RBP$cell <- factor(longer_z_means_by_RBP$cell, levels = lineageOrder[2:28])
+
+longer_z_means_by_RBP$IP <- factor(longer_z_means_by_RBP$IP, levels = c("SPN-4", "LIN-41_SPN-4", "OMA-1_SPN-4", "OMA-1_SPN-4_LIN-41", "LIN-41", "OMA-1", "OMA-1_LIN-41", "none"))
+
+
+# create lineplots of the trend over cell type for each cluster
+# Set color palette
+
+# Set colors
+vcolors = c("#3ab04a", "#97688d", "#39af99", "#664746", "#9c3393", "#2075bc", "#624da0", "darkgrey")
+
+
+# Create Lineplots
+zlineplot_RBP <- ggplot(longer_z_means_by_RBP, aes(x=cell, y=intensity, group=IP, colour=IP)) + 
+  geom_line()+
+  geom_point() +
+  facet_grid(rows = vars(IP)) +
+  scale_color_manual(values=vcolors)
+
+zlineplot_RBP
+
+# Tabulate the number of genes in each category:
+table(factor(clustered_scaled_wide_ann2$IP))
+
+
+```
+
 
 ### Agilent-style transparent multi-lineplots
 
