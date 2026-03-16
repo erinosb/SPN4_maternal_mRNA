@@ -1,5 +1,0 @@
-cell_stage mRNA_name Freq
-1 2-cell lin41_mRNA 38
-2 4-cell lin41_mRNA 28
-3 2-cell set3_mRNA 58
-4 4-cell set3_mRNA 48
