@@ -19,13 +19,14 @@ This analysis will appear in Figure 2 of Spike et al.
 
   * tidyverse
   * gridExtra
+  * gtools
   
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE} 
 
 library(tidyverse)
 library(gridExtra)
-
+library(gtools)
 ```
 
 
@@ -132,7 +133,7 @@ dim(FISHcounts_total_sizes)
 
 ```
 
-# Filter by lin-41 counts and plot
+# Filter by lin-41 counts, stats, and plot
 
 ```{r lin41, echo=TRUE, warning = FALSE, message = FALSE}
 
@@ -153,20 +154,36 @@ scaled_lin41_selection <- lin41_selection %>%
 
 print(scaled_lin41_selection, width = Inf)
 
-# Plot abundance scaled by estimated cell type volume 
+# Save statistics info in a data frame
+tTest_stats <- df_structure <- data.frame(
+  transcript = character(0),
+  cell1 = character(0),
+  cell2 = character(0),
+  tstat = numeric(0),
+  pval = numeric(0)
+)
 
-u <- ggplot(scaled_lin41_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
-    geom_boxplot() +
-    geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
-    labs(title = "lin-41 mRNA abundance by volume",
-       x = "Cell Identity",
-       y = "lin-41 mRNA, relative concentration per volume")
-u
+# Create a function to capture the t-test statistic and p-value
+addToTTestStats <- function(data, transcript, cell1, cell2) {
+  filtered_df <- data %>%
+    filter(label == cell1 | label == cell2)
+  listOfData <- list(transcript, 
+                    cell1,
+                    cell2,
+                    as.numeric(t.test(abundance_by_vol ~ label, filtered_df)$statistic),
+                    as.numeric(t.test(abundance_by_vol ~ label, filtered_df)$p.value))
+  return(listOfData)
+  }
+
+# Calculate the t-tests for the lin-41 data
+tTest_stats[1,] <- addToTTestStats(scaled_lin41_selection, "lin-41", "AB", "P1")
+tTest_stats[2,] <- addToTTestStats(scaled_lin41_selection, "lin-41", "EMS", "P2")
+tTest_stats[3,] <- addToTTestStats(scaled_lin41_selection, "lin-41", "ABa", "ABp")
 
 ```
 
 
-# Filter by set-3 counts and plot
+# Filter by set-3 counts and stats
 
 ```{r set3, echo=TRUE, warning = FALSE, message = FALSE}
 
@@ -181,7 +198,29 @@ set3_selection <- FISHcounts_total_sizes %>%
 scaled_set3_selection <- set3_selection %>%
   mutate(abundance_by_vol = abundance / volume)
 
-#print(scaled_set3_selection, width = Inf)
+# Calculate Statistics for the set-3 data
+tTest_stats[4,] <- addToTTestStats(scaled_set3_selection, "set-3", "AB", "P1")
+tTest_stats[5,] <- addToTTestStats(scaled_set3_selection, "set-3", "EMS", "P2")
+tTest_stats[6,] <- addToTTestStats(scaled_set3_selection, "set-3", "ABa", "ABp")
+
+# BH transform stats
+tTest_stats <- tTest_stats %>%
+  mutate(q.value = p.adjust(pval, method = "BH")) %>%
+  mutate(stars = stars.pval(q.value))
+  
+
+# output of stats
+tTest_stats
+
+# Plot abundance scaled by estimated cell type volume 
+u <- ggplot(scaled_lin41_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
+    geom_boxplot() +
+    geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
+    labs(title = "lin-41 mRNA abundance by volume",
+       x = "Cell Identity",
+       y = "lin-41 mRNA, relative concentration per volume")
+u
+
 
 # Plot abundance scaled by estimated cell type volume 
 
@@ -219,17 +258,15 @@ dev.off()
 
 # Export data tables
 
-```{r printplots, , echo = TRUE, message = FALSE, warning = FALSE}
+```{r printplots2, , echo = TRUE, message = FALSE, warning = FALSE}
 
-# Merge teh lin-41 and set-3 data together
+# Merge the lin-41 and set-3 data together
 lin41_and_set3_selection <- rbind(scaled_lin41_selection, scaled_set3_selection)
 
-lin41_selection$mRNA_name
 dim(lin41_and_set3_selection)
-colnames(lin41_and_set3_selection)
-head(lin41_and_set3_selection)
+
 # Split out the date:
-lin41_and_set3_selection$rep
+# lin41_and_set3_selection$rep
 
 lin41_and_set3_selection2 <- lin41_and_set3_selection %>%
   mutate(date = substr(lin41_and_set3_selection$ImageID, 0, 6)) %>%
@@ -238,7 +275,7 @@ lin41_and_set3_selection2 <- lin41_and_set3_selection %>%
 lin41_and_set3_selection2$date <- as.factor(lin41_and_set3_selection2$date)
 lin41_and_set3_selection2$mRNA_name <- droplevels(lin41_and_set3_selection2$mRNA_name )
 
-lin41_and_set3_selection2
+# lin41_and_set3_selection2
 
 # Calculate the n-values per stage and transcript type
 nvalues <- lin41_and_set3_selection2 %>%
@@ -246,7 +283,7 @@ nvalues <- lin41_and_set3_selection2 %>%
 
 # Convert to a data frame
 ntable <- table(nvalues)
-as.data.frame(ntable)
+# as.data.frame(ntable)
 
 # Calculate the rep-values per stage and transcript type
 repvalues <- lin41_and_set3_selection2 %>%
@@ -254,7 +291,7 @@ repvalues <- lin41_and_set3_selection2 %>%
 
 # Convert to a data frame
 reptable <- table(repvalues)
-as.data.frame(reptable)
+# as.data.frame(reptable)
 
 
 # Set today's date
@@ -275,6 +312,10 @@ filename3 <- paste("../04_data/", today, "_rep_values_Figure2C.txt", sep = "")
 # save n-values
 write.table(as.data.frame(reptable), file = filename3, quote = FALSE)
 
+# save stats
+today <- format(Sys.Date(), "%y%m%d")
+filename <- paste("../04_data/", today, "_Figure_stats.txt", sep = "")
+write.table(tTest_stats, file = filename, quote = FALSE)
 
 
 ```

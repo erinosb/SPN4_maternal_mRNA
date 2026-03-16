@@ -9,9 +9,11 @@ February 9, 2026
 - [Reformat the smFISH abundance
   data](#reformat-the-smfish-abundance-data)
 - [Import the cell size metrics](#import-the-cell-size-metrics)
-- [Filter by lin-41 counts and plot](#filter-by-lin-41-counts-and-plot)
-- [Filter by set-3 counts and plot](#filter-by-set-3-counts-and-plot)
+- [Filter by lin-41 counts, stats, and
+  plot](#filter-by-lin-41-counts-stats-and-plot)
+- [Filter by set-3 counts and stats](#filter-by-set-3-counts-and-stats)
 - [Print and save relevant plots](#print-and-save-relevant-plots)
+- [Export data tables](#export-data-tables)
 - [Session info](#session-info)
 
 The purpose of this script is to assess the abundance of lin-41 mRNA and
@@ -30,6 +32,7 @@ This analysis will appear in Figure 2 of Spike et al.
 
 - tidyverse
 - gridExtra
+- gtools
 
 # Import smFISH abundance data
 
@@ -225,7 +228,7 @@ dim(FISHcounts_total_sizes)
 
     ## [1] 214  12
 
-# Filter by lin-41 counts and plot
+# Filter by lin-41 counts, stats, and plot
 
 ``` r
 # Filter by lin-41
@@ -290,20 +293,34 @@ print(scaled_lin41_selection, width = Inf)
     ## # ℹ 56 more rows
 
 ``` r
-# Plot abundance scaled by estimated cell type volume 
+# Save statistics info in a data frame
+tTest_stats <- df_structure <- data.frame(
+  transcript = character(0),
+  cell1 = character(0),
+  cell2 = character(0),
+  tstat = numeric(0),
+  pval = numeric(0)
+)
 
-u <- ggplot(scaled_lin41_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
-    geom_boxplot() +
-    geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
-    labs(title = "lin-41 mRNA abundance by volume",
-       x = "Cell Identity",
-       y = "lin-41 mRNA, relative concentration per volume")
-u
+# Create a function to capture the t-test statistic and p-value
+addToTTestStats <- function(data, transcript, cell1, cell2) {
+  filtered_df <- data %>%
+    filter(label == cell1 | label == cell2)
+  listOfData <- list(transcript, 
+                    cell1,
+                    cell2,
+                    as.numeric(t.test(abundance_by_vol ~ label, filtered_df)$statistic),
+                    as.numeric(t.test(abundance_by_vol ~ label, filtered_df)$p.value))
+  return(listOfData)
+  }
+
+# Calculate the t-tests for the lin-41 data
+tTest_stats[1,] <- addToTTestStats(scaled_lin41_selection, "lin-41", "AB", "P1")
+tTest_stats[2,] <- addToTTestStats(scaled_lin41_selection, "lin-41", "EMS", "P2")
+tTest_stats[3,] <- addToTTestStats(scaled_lin41_selection, "lin-41", "ABa", "ABp")
 ```
 
-![](260209_blastomere_specific__files/figure-gfm/lin41-1.png)<!-- -->
-
-# Filter by set-3 counts and plot
+# Filter by set-3 counts and stats
 
 ``` r
 # Filter by lin-41
@@ -317,8 +334,43 @@ set3_selection <- FISHcounts_total_sizes %>%
 scaled_set3_selection <- set3_selection %>%
   mutate(abundance_by_vol = abundance / volume)
 
-#print(scaled_set3_selection, width = Inf)
+# Calculate Statistics for the set-3 data
+tTest_stats[4,] <- addToTTestStats(scaled_set3_selection, "set-3", "AB", "P1")
+tTest_stats[5,] <- addToTTestStats(scaled_set3_selection, "set-3", "EMS", "P2")
+tTest_stats[6,] <- addToTTestStats(scaled_set3_selection, "set-3", "ABa", "ABp")
 
+# BH transform stats
+tTest_stats <- tTest_stats %>%
+  mutate(q.value = p.adjust(pval, method = "BH")) %>%
+  mutate(stars = stars.pval(q.value))
+  
+
+# output of stats
+tTest_stats
+```
+
+    ##   transcript cell1 cell2      tstat         pval     q.value stars
+    ## 1     lin-41    AB    P1 -4.1565862 0.0002039347 0.001223608    **
+    ## 2     lin-41   EMS    P2 -3.7834385 0.0036604249 0.007320850    **
+    ## 3     lin-41   ABa   ABp -1.2982410 0.2300589676 0.276070761      
+    ## 4      set-3    AB    P1 -3.1555894 0.0026907102 0.007320850    **
+    ## 5      set-3   EMS    P2 -1.5226661 0.1510736780 0.226610517      
+    ## 6      set-3   ABa   ABp  0.5943624 0.5634851501 0.563485150
+
+``` r
+# Plot abundance scaled by estimated cell type volume 
+u <- ggplot(scaled_lin41_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
+    geom_boxplot() +
+    geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
+    labs(title = "lin-41 mRNA abundance by volume",
+       x = "Cell Identity",
+       y = "lin-41 mRNA, relative concentration per volume")
+u
+```
+
+![](260209_blastomere_specific__files/figure-gfm/set3-1.png)<!-- -->
+
+``` r
 # Plot abundance scaled by estimated cell type volume 
 
 v <- ggplot(scaled_set3_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
@@ -330,9 +382,11 @@ v <- ggplot(scaled_set3_selection, aes(x=label, y=abundance_by_vol, fill=lineage
 v
 ```
 
-![](260209_blastomere_specific__files/figure-gfm/set3-1.png)<!-- -->
+![](260209_blastomere_specific__files/figure-gfm/set3-2.png)<!-- -->
 
 # Print and save relevant plots
+
+This will be included as Figure 2C
 
 ``` r
 # Set today's date
@@ -352,6 +406,71 @@ dev.off()
     ## quartz_off_screen 
     ##                 2
 
+# Export data tables
+
+``` r
+# Merge the lin-41 and set-3 data together
+lin41_and_set3_selection <- rbind(scaled_lin41_selection, scaled_set3_selection)
+
+dim(lin41_and_set3_selection)
+```
+
+    ## [1] 172  13
+
+``` r
+# Split out the date:
+# lin41_and_set3_selection$rep
+
+lin41_and_set3_selection2 <- lin41_and_set3_selection %>%
+  mutate(date = substr(lin41_and_set3_selection$ImageID, 0, 6)) %>%
+  select(ImageID, date, mRNA_name, cell_stage, label, lineage, abundance, perimeter, major_axis_length, minor_axis_length, circumference, volume, abundance_by_vol)
+
+lin41_and_set3_selection2$date <- as.factor(lin41_and_set3_selection2$date)
+lin41_and_set3_selection2$mRNA_name <- droplevels(lin41_and_set3_selection2$mRNA_name )
+
+# lin41_and_set3_selection2
+
+# Calculate the n-values per stage and transcript type
+nvalues <- lin41_and_set3_selection2 %>%
+  select(cell_stage, mRNA_name) 
+
+# Convert to a data frame
+ntable <- table(nvalues)
+# as.data.frame(ntable)
+
+# Calculate the rep-values per stage and transcript type
+repvalues <- lin41_and_set3_selection2 %>%
+  select(date, mRNA_name)
+
+# Convert to a data frame
+reptable <- table(repvalues)
+# as.data.frame(reptable)
+
+
+# Set today's date
+today <- format(Sys.Date(), "%y%m%d")
+
+# set raw data filename - lin-41 and set-3
+filename <- paste("../04_data/", today, "_dataTables_Figure2C.txt", sep = "")
+# save raw data - lin-41 and set-3
+write.table(lin41_and_set3_selection2, file = filename, quote = FALSE)
+
+# set filename - n-values
+filename2 <- paste("../04_data/", today, "_n_values_Figure2C.txt", sep = "")
+# save n-values
+write.table(as.data.frame(ntable), file = filename2, quote = FALSE)
+
+# set filename - n-values
+filename3 <- paste("../04_data/", today, "_rep_values_Figure2C.txt", sep = "")
+# save n-values
+write.table(as.data.frame(reptable), file = filename3, quote = FALSE)
+
+# save stats
+today <- format(Sys.Date(), "%y%m%d")
+filename <- paste("../04_data/", today, "_Figure_stats.txt", sep = "")
+write.table(tTest_stats, file = filename, quote = FALSE)
+```
+
 # Session info
 
 ``` r
@@ -360,7 +479,7 @@ sessionInfo()
 
     ## R version 4.3.1 (2023-06-16)
     ## Platform: x86_64-apple-darwin20 (64-bit)
-    ## Running under: macOS 26.2
+    ## Running under: macOS 26.3
     ## 
     ## Matrix products: default
     ## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
@@ -376,9 +495,9 @@ sessionInfo()
     ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] gridExtra_2.3   lubridate_1.9.4 forcats_1.0.0   stringr_1.5.1  
-    ##  [5] dplyr_1.1.4     purrr_1.1.0     readr_2.1.5     tidyr_1.3.1    
-    ##  [9] tibble_3.3.0    ggplot2_3.5.2   tidyverse_2.0.0
+    ##  [1] gtools_3.9.5    gridExtra_2.3   lubridate_1.9.4 forcats_1.0.0  
+    ##  [5] stringr_1.5.1   dplyr_1.1.4     purrr_1.1.0     readr_2.1.5    
+    ##  [9] tidyr_1.3.1     tibble_3.3.0    ggplot2_3.5.2   tidyverse_2.0.0
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] gtable_0.3.6       compiler_4.3.1     tidyselect_1.2.1   scales_1.4.0      
