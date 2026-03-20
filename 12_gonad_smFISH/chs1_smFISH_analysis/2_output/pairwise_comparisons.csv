@@ -1,0 +1,7 @@
+"Genotype1","Genotype2","Stage","FoldChange","SE","df","null","z.ratio","P_value","Interpretation"
+"WT","tm291","Diakinesis",1.048306629369,0.0373886155268093,Inf,1,1.32273012604966,0.557775423785845,"Small/no change"
+"WT","puf3 puf11","Diakinesis",0.978008856587324,0.0383805130867509,Inf,1,-0.566629890905189,1,"Small/no change"
+"tm291","puf3 puf11","Diakinesis",0.932941592839122,0.0326162269262789,Inf,1,-1.98545275753735,0.14128236375318,"Small/no change"
+"WT","tm291","Post-diakinesis",1.04059135263905,0.0522159981710183,Inf,1,0.792941955207705,1,"Small/no change"
+"WT","puf3 puf11","Post-diakinesis",1.71054133414546,0.0908896307494539,Inf,1,10.1027531744826,1.6113796807371e-23,"Moderate change"
+"tm291","puf3 puf11","Post-diakinesis",1.6438165950614,0.0852754460988728,Inf,1,9.58084609129776,2.88759459830153e-21,"Moderate change"

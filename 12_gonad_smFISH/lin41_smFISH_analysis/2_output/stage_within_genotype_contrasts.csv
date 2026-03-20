@@ -1,0 +1,3 @@
+"contrast","Genotype","ratio","SE","df","null","z.ratio","p.value"
+"Diakinesis / (Post-diakinesis)","WT",1.02552920114824,0.0359567819669839,Inf,1,0.718983501476097,0.472151085237378
+"Diakinesis / (Post-diakinesis)","tm291",1.0021257137747,0.0401753610168439,Inf,1,0.0529670786067429,0.957758138342582
