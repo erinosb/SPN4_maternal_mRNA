@@ -28,6 +28,8 @@ This repository accompanies the manuscript "The SPN-4 Rbfox RNA-binding protein 
 
 Click on the links below (or directories above) to navigate to each directory:
 
+### [00 RNP IP sequencing analysis](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/00_SPN-4_RNPS)
+
 ### [01 Comparison of SPN-4, LIN-41, and OMA-1 associated RNA cohorts](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/01_SPN4_LIN41_OMA1_Comparison)
 
 ### [02 GO Ontology of SPN-4, LIN-41, and OMA-1 associated RNA cohorts](https://github.com/erinosb/SPN4_maternal_mRNA/tree/main/02_GO_Ontology)
