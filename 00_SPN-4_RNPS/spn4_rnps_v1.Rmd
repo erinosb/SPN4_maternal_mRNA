@@ -1,0 +1,638 @@
+---
+title: "Analysis of Combined RNP IP Data"
+author: "Micah Gearhart"
+date: "6/04/2018"
+output:
+  md_document:
+    variant: markdown_github
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,fig.path='figures/rnp-')
+```
+
+```{r libraries,eval=T,results='hide',message=FALSE,warning=FALSE}
+library("biomaRt")
+library("GenomicFeatures")
+library("Rsamtools")
+
+library("GenomicFeatures")
+library("Rsamtools")
+library("rtracklayer")
+library("GenomicAlignments")
+library("BiocParallel")
+library("DESeq2")
+library("limma")
+library("genefilter")
+library("pheatmap")
+#library("dendsort")
+#library("SRAdb")
+library("goseq")
+
+
+library("ggplot2")
+library("svglite")
+library("dplyr")
+library("tidyr")
+library("magrittr")
+library("RColorBrewer")
+library("gridExtra")
+library("motifStack")
+library("VennDiagram")
+library("UpSetR")
+
+library("Gviz")
+library("BSgenome.Celegans.UCSC.ce11")
+
+seqlevelsStyle(BSgenome.Celegans.UCSC.ce11)<-"NCBI"
+seqlevelsStyle(BSgenome.Celegans.UCSC.ce11)
+options(ucscChromosomeNames=FALSE)
+
+(ts<-format(Sys.time(), "%a_%b_%d_%Y_%H%M"))
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+cbPalette2<-c("#cbc9e2","#9e9ac8","#6a51a3", "#fdbe85","#fd8d3c","#d94701",
+          "#56B4E9", "#009E73","#F0E442", "#0072B2", "black","red","green")
+
+wls<- function(x) { paste0(seqnames(x),":",start(x),"-",end(x))}
+```
+
+## Define Functions
+
+```{r bigWigs,eval=F}
+
+gg_plotCounts<-function(x="WBGene00001214",d=dds91q4) {
+  if (substr(x,1,6)=="WBGene") {
+    title<-symbols[grep(x,symbols$gene_id),"gene_name"]
+  } else {
+    title<-x
+    x<-symbols[grep(paste0("^",title,"$"),symbols$gene_name),"gene_id"]
+  }
+  plotCounts(d,x,intgroup=c("tag","fraction","line"),returnData=T) %>%
+    tibble::rownames_to_column() %>%
+    dplyr::mutate(log2count=log2(count+1)) %>% 
+    ggplot(aes(x=fraction, y=log2count,colour=line)) +
+    geom_point(position=position_jitter(w=0.1,h=0),size=3) + ggtitle(paste0(title," : ",x)) +
+    expand_limits(x=0, y = 0) + xlab("") + ylab("Log2 Normalized Counts") +
+    facet_grid(~tag) + scale_color_manual(values=c("#0072B2","#fdbe85")) +
+     stat_summary(fun = mean, fun.min = mean, fun.max = mean,
+                geom = "crossbar", width = 0.5,color="blue",size=0.4) +
+    theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+  # + theme(legend.position="none") 
+}
+
+bam2bw<-function(x,filter=TRUE) {
+for (i in seq_along(1:ncol(x))) {
+  bam_file=paste0("../data/",colData(x)[i,"filename"])
+  print(bam_file)
+  bigwig_file_fwd<-paste0("../data/",rownames(colData(x))[i],"_",colData(x)[i,"line"],"_",colData(x)[i,"index"],"_scaled_fwd.bigWig")
+  bigwig_file_rev<-paste0("../data/",rownames(colData(x))[i],"_",colData(x)[i,"line"],"_",colData(x)[i,"index"],"_scaled_rev.bigWig")
+  
+  param_fwdr1 <- ScanBamParam(what="mapq",flag = scanBamFlag(isUnmappedQuery = F,isMinusStrand = F,isMateMinusStrand = T,isProperPair = T,isFirstMateRead = T,isSecondMateRead = F))
+  param_fwdr2 <- ScanBamParam(what="mapq",flag = scanBamFlag(isUnmappedQuery = F,isMinusStrand = T,isMateMinusStrand = F,isProperPair = T,isFirstMateRead= F,isSecondMateRead = T))
+
+  param_revr1 <- ScanBamParam(what="mapq",flag = scanBamFlag(isUnmappedQuery = F,isMinusStrand = T,isMateMinusStrand = F,isProperPair = T,isFirstMateRead = T,isSecondMateRead = F))
+  param_revr2 <- ScanBamParam(what="mapq",flag = scanBamFlag(isUnmappedQuery = F,isMinusStrand = F,isMateMinusStrand = T,isProperPair = T,isFirstMateRead= F,isSecondMateRead = T))
+  
+  temp_revr1<-readGAlignments(bam_file,param=param_revr1)
+  temp_revr2<-readGAlignments(bam_file,param=param_revr2)
+  temp_rev<-GAlignmentPairs(temp_revr1,temp_revr2)
+  
+  temp_fwdr1<-readGAlignments(bam_file,param=param_fwdr1)
+  temp_fwdr2<-readGAlignments(bam_file,param=param_fwdr2)
+  temp_fwd<-GAlignmentPairs(temp_fwdr1,temp_fwdr2)
+  
+  
+if(filter) {
+
+  temp_fwd.cov<-coverage(temp_fwd[mcols(temp_fwdr1)$mapq >= qfilter],weight= 1/colData(x)[i,"sizeFactor"])
+  export(temp_fwd.cov,bigwig_file_fwd)
+  temp_rev.cov<-coverage(temp_rev[mcols(temp_revr1)$mapq >= qfilter],weight= 1/colData(x)[i,"sizeFactor"])
+  export(temp_rev.cov,bigwig_file_rev)
+
+       
+} else {
+
+temp_rev.cov<-coverage(temp_rev,weight= 1/colData(x)[i,"sizeFactor"])
+export(temp_rev.cov,bigwig_file_fwd)
+temp_fwd.cov<-coverage(temp_fwd,weight= 1/colData(x)[i,"sizeFactor"])
+export(temp_fwd.cov,bigwig_file_rev)
+
+}
+    }
+}
+
+```
+
+```{bash,eval=F}
+module load java parallel
+cd $PBS_O_WORKDIR
+dd=/home/greenste/data_release/umgc/nextseq/180305_NB551164_0025_AHM7KJBGX5/Greenstein_Project_007
+
+#TRIM the READS USING PARALLEL
+ls $dd/spn4_*_R1_001.fastq.gz | parallel --jobs 10 ./trim.script
+
+#MAP USING STAR
+module load star
+
+STAR --genomeDir /home/greenste/gearh006/WBcel235 --genomeLoad LoadAndExit
+ls fastq/*.R1_trimmed.fastq.gz | parallel --tmpdir /scratch.global/gearh006/tmp --jobs 10 ./map_star_WBcel235.script
+STAR --genomeDir /home/greenste/gearh006/WBcel235 --genomeLoad Remove
+
+#SORT THE BAM FILES IN PARALLEL
+module load samtools/1.0_BCFTools_HTSLib bedtools
+ls WBcel235/*.bam | parallel --jobs 6 ./sort_rna.script
+```
+
+## trim.script
+```{bash, eval=F}
+file_R1=$1
+file_R2="${file_R1/R1/R2}"
+base_R1=$( basename "$file_R1" )
+base_R2="${base_R1/R1/R2}"
+j="${base_R1%%.*}"
+i="${j/_R1_001/}"
+#gzip -c $file > $i.gz
+#echo $file_R1
+#echo $base_R1
+#echo $i
+
+java -Xmx16g -jar /home/bardwell/shared/Trimmomatic-0.32/trimmomatic-0.32.jar PE \
+-threads 1 -phred33 \
+$file_R1 $file_R2 \
+fastq/$i.R1_trimmed.fastq.gz fastq/$i.UR1_trimmed.fastq.gz \
+fastq/$i.R2_trimmed.fastq.gz fastq/$i.UR2_trimmed.fastq.gz \
+ILLUMINACLIP:/home/bardwell/shared/Trimmomatic-0.32/adapters/TruSeq3-PE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:5 MINLEN:25
+
+```
+
+## map_star_WBcel235.script
+```{r}
+i=$1
+file_R1=$1
+file_R2="${file_R1/R1/R2}"
+base_R1=$( basename "$file_R1" )
+base_R2="${base_R1/R1/R2}"
+j="${base_R1%%.*}"
+i="${j/_R1_001/}"
+#gzip -c $file > $i.gz
+#echo $file_R1
+#echo $base_R2
+#echo $i
+
+#use STAR to map PE reads
+STAR --genomeDir /home/greenste/gearh006/WBcel235 \
+--genomeLoad LoadAndKeep \
+--outTmpDir /scratch.global/gearh006/$i.tmpDir \
+--outFilterMultimapNmax 40 \
+--runThreadN 2 \
+--readFilesIn fastq/$i.R1_trimmed.fastq.gz fastq/$i.R2_trimmed.fastq.gz \
+--readFilesCommand zcat \
+--limitBAMsortRAM 31532137230 \
+--outSAMtype BAM SortedByCoordinate \
+--outFileNamePrefix WBcel235/$i.
+```
+
+## sort_rna.script
+```{r}
+j=$1
+i="${j%.*}"
+
+Sort bam outside of STAR
+samtools sort $j $i
+
+#create the index file
+samtools index $j
+```
+
+## Count with featureCounts
+```{r count_features,eval=F}
+library(Rsamtools)
+library(GenomicAlignments)
+library(GenomicFeatures)
+library(BiocParallel)
+library(DESeq2)
+library(rtracklayer)
+library("Rsubread")
+library("magrittr")
+
+ts<-format(Sys.time(), "%a_%b_%d_%Y_%H%M")
+
+qfilter<-4
+gff3_file<-"Caenorhabditis_elegans.WBcel235.91.gff3"
+
+(fls <- list.files("WBcel235", pattern=".bam$",full=TRUE))
+
+rev_stranded_counts<-featureCounts(fls,
+                 annot.ext = gff3_file,
+                 isGTFAnnotationFile=TRUE,
+                 strandSpecific=2,
+                 nthreads=20,
+                 minMQS=qfilter,
+                 isPairedEnd=TRUE,
+                 checkFragLength=TRUE,
+                 requireBothEndsMapped=TRUE,
+                 )
+
+rev_stranded_unfiltered<-featureCounts(fls,
+                 annot.ext = gff3_file,
+                 isGTFAnnotationFile=TRUE,
+                 strandSpecific=2,
+                 nthreads=20,
+                 minMQS=0,
+		 countMultiMappingReads=TRUE,
+                 isPairedEnd=TRUE,
+                 checkFragLength=TRUE,
+                 requireBothEndsMapped=TRUE,
+                 )
+
+
+save(fls,rev_stranded_counts,rev_stranded_unfiltered, file=paste0("spn4_P007_featureCounts_Gencode-E91_q",qfilter,"_",ts,".rdata"))
+```
+
+## Compare the biotype Distributions across samples with and without a MAPQ filter
+```{r eda,eval=T,fig.height=10,fig.width=6}
+#load("ens91.rdata")
+load("../data/spn4_P007_featureCounts_Gencode-E91_q55_Sat_Apr_21_2018_1219.rdata")
+
+sample_data1<-as.data.frame(readxl::read_excel("../data/SPN-4_RNA-Seq samples.xlsx"))
+sample_data2<-as.data.frame(readxl::read_excel("../data/LIN-41_IP_RNA-Seq samples_2018-04-12.xlsx"))
+sample_data3<-as.data.frame(readxl::read_excel("../data/OMA-1_IP_RNA-Seq samples_2018-05-12.xlsx"))[,c(1,3)]
+sample_data<-rbind(sample_data1,sample_data2,sample_data3)
+
+sample_data$tag<-rep(c("spn4","lin41","oma1"),each=10)
+sample_data$`Indexing Primer`<-gsub(" ","",sample_data$`Indexing Primer`)
+sample_data$`Sample Name`<-gsub(" ","",sample_data$`Sample Name`)
+sample_data$`Indexing Primer`<-paste0(sample_data$tag,"_",sample_data$`Indexing Primer`)
+
+counts91<-as.data.frame(rev_stranded_unfiltered_dedup$counts)
+counts91q4<-as.data.frame(rev_stranded_counts_dedup$counts)
+coldata<-round(data.frame(filtered=apply(counts91q4,2,sum),unfiltered=apply(counts91,2,sum))/1e6,3)
+coldata$filename<- rownames(coldata) %>% 
+  gsub("WBcel235\\.","",.) %>% 
+  gsub("\\.\\.\\.Greenste_Project_007\\.","",.) %>% 
+  gsub("\\.\\.\\.Greenste_Project_008\\.","",.)  
+  
+coldata$tag<-factor(case_when(stringr::str_detect(coldata$filename,"spn4")  ~ "spn4",
+          stringr::str_detect(rownames(coldata),"lin41") ~ "lin41",
+          stringr::str_detect(rownames(coldata),"oma1") ~ "oma1"),
+          levels=c("oma1","lin41","spn4"))
+
+coldata$id<-paste0(coldata$tag,"_",
+       gsub("index","Index",sapply(strsplit(coldata$filename,"_"), function(x) x[2])))
+
+
+idx<-match(coldata$id,sample_data$`Indexing Primer`)
+coldata$sample_name<-sample_data[idx,"Sample Name"]
+
+#4398 is sperm- background, and the genotype is fog-1(q253); spn-4(tn1699).
+#4400 is sperm+ background, and the genotype is spe-9(hc88); spn-4(tn1699).
+#3923 is sperm- background, and the genotype is fog-1(q253); lin-41(tn1541).
+#4485 is sperm+ background, and the genotype is spe-9(hc88); lin-41(tn1541).
+#2566 is sperm– background, and the genotype is fog-1(q253); oma-1(zu405te33); tnIs17.
+#2581 is sperm+ background, and the genotype is spe-9(hc88); oma-1(zu405te33); tnIs17.
+  
+
+coldata$line<-case_when(stringr::str_detect(coldata$sample_name,"4398")  ~ "sperm_neg",
+          stringr::str_detect(coldata$sample_name,"4400") ~ "sperm_pos",
+          stringr::str_detect(coldata$sample_name,"3923") ~ "sperm_neg",
+          stringr::str_detect(coldata$sample_name,"4485") ~ "sperm_pos",
+          stringr::str_detect(coldata$sample_name,"2566") ~ "sperm_neg",
+          stringr::str_detect(coldata$sample_name,"2581") ~ "sperm_pos",
+          stringr::str_detect(coldata$sample_name,"3923") ~ "sperm_neg")
+
+
+#coldata$line<-factor(ifelse(stringr::str_detect(rownames(coldata),"4398"),"sperm_neg","sperm_pos"),levels=c("sperm_neg","sperm_pos"))
+coldata$fraction<-factor(ifelse(stringr::str_detect(coldata$sample_name,"Lysate"),"Lysate","IP"),levels=c("Lysate","IP"))
+#coldata$filename<-gsub("WBcel235\\.","",coldata$filename)
+coldata
+
+all_equal(colnames(counts91),rownames(coldata))
+all_equal(colnames(counts91q4),rownames(coldata))
+
+colnames(counts91)<-coldata$sample_name
+colnames(counts91q4)<-coldata$sample_name
+rownames(coldata)<-coldata$sample_name
+
+#add biotype to counts table
+counts91$biotype<-symbols[match(rownames(counts91),symbols$gene_id),"gene_biotype"]
+counts91q4$biotype<-symbols[match(rownames(counts91q4),symbols$gene_id),"gene_biotype"]
+
+mean(apply(counts91[,1:10],2,sum))
+mean(apply(counts91q4[,1:10],2,sum))
+
+
+g1<-tidyr::gather(counts91,sample,counts,-biotype) %>%
+  dplyr::group_by(sample,biotype) %>%
+  dplyr::summarize(countSum=sum(counts)) %>%
+  ggplot(aes(x=sample,y=countSum,fill=biotype)) + ggtitle("Counts with Ensembl91") +
+  scale_fill_manual(values=rev(cbPalette2),guide = guide_legend(reverse=TRUE)) +
+  geom_bar(stat="identity") + theme_classic() + theme(axis.text.x = element_text(angle = 90,  hjust = 0)) 
+
+g2<-tidyr::gather(counts91q4,sample,counts,-biotype) %>%
+  dplyr::group_by(sample,biotype) %>%
+  dplyr::summarize(countSum=sum(counts)) %>%
+  ggplot(aes(x=sample,y=countSum,fill=biotype)) + ggtitle("Counts with Ensembl91 with Mapping Quality Filter") +
+  scale_fill_manual(values=rev(cbPalette2),guide = guide_legend(reverse=TRUE)) +
+  geom_bar(stat="identity") + theme_classic() + theme(axis.text.x = element_text(angle = 90,  hjust = 0)) 
+
+
+grid.arrange(g1,g2,ncol=1)
+#ggsave(file=paste0("read_distributions_",ts,".svg"),device = svglite::svglite,plot=g1,width=8.5,height=6)
+#ggsave(file=paste0("read_distributions_q4_",ts,".svg"),device = svglite::svglite,plot=g2,width=8.5,height=6)
+```
+
+
+## Filter out rRNA genes and analyze for Enrichment relative to Input
+```{r PCA,eval=T}
+summary(idx<-match(rownames(counts91),symbols$gene_id))
+
+dim(dds91<-DESeqDataSetFromMatrix(counts91[!counts91$biotype %in% c("rRNA","rRNA_pseudogene","tRNA","tRNA_pseudogene"),1:30],colData = coldata,design=~fraction+line))
+dim(dds91q4<-DESeqDataSetFromMatrix(counts91q4[!counts91q4$biotype %in% c("rRNA","rRNA_pseudogene","tRNA","tRNA_pseudogene") ,1:30],colData = coldata,design=~fraction+line))
+
+dds91<-estimateSizeFactors(dds91)
+dds91q4<-estimateSizeFactors(dds91q4)
+
+dds91<-dds91[,colData(dds91)$sizeFactor > 0.1]
+dds91q4<-dds91q4[,colData(dds91q4)$sizeFactor > 0.1] # this line drops out SPN4_DG4400_IP2_RNA
+
+dds91<-estimateSizeFactors(dds91)
+dds91q4<-estimateSizeFactors(dds91q4)
+
+#add basepairs from featureCounts to enable fpkm()
+bp<-rev_stranded_counts$annotation
+mcols(dds91)$basepairs<-bp[match(rownames(dds91),bp$GeneID),"Length"]
+mcols(dds91q4)$basepairs<-bp[match(rownames(dds91q4),bp$GeneID),"Length"]
+
+(pca1<-plotPCA( normTransform( dds91 ),intgroup=c("tag","fraction"))+ ggtitle("PCA without MapQ Filter") +
+    scale_color_manual(values=cbPalette[c(7,5,2,6,3,1)]) +
+    theme_bw() + theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank()) )
+
+(pca2<-plotPCA( normTransform( dds91q4 ),intgroup=c("tag","fraction"))+ ggtitle("PCA with MapQ Filter") + 
+    scale_color_manual(values=cbPalette[c(7,5,2,6,3,1)]) +
+    theme_bw() + theme(panel.grid.major=element_blank(), panel.grid.minor=element_blank()) )
+
+
+#make BigWig files
+dds91q4 <- estimateSizeFactors(dds91q4)
+#bam2bw(dds91q4,F)
+
+# house keeping genes
+gg_plotCounts("eif-3.C")
+gg_plotCounts("tba-1")
+gg_plotCounts("ama-1")
+gg_plotCounts("lin-41")
+gg_plotCounts("WBGene00000063")
+
+#ggsave(file=paste0("pca_",ts,".svg"),device = svglite::svglite,plot=pca2,width=8.5,height=6)
+
+```
+
+
+
+## FPKM table
+```{r}
+dim(f<-as.data.frame(log2(fpkm(dds91q4,robust=T)+0.1)))
+
+f_mean <- f %>% 
+  tibble::rownames_to_column(var="ensembl_gene_id") %>%
+  tidyr::gather(sample,fpkm,-ensembl_gene_id) %>% 
+  dplyr::mutate(sample=paste0(colData(dds91q4)[sample,]$tag,":",colData(dds91q4)[sample,]$fraction,":",colData(dds91q4)[sample,]$line)) %>% 
+  dplyr::group_by(sample,ensembl_gene_id) %>% 
+    dplyr::summarize(mean_fpkm=round(mean(fpkm),3)) %>% 
+    dplyr::select(sample,ensembl_gene_id,mean_fpkm) %>% 
+    ungroup() %>% 
+  tidyr::spread(sample,mean_fpkm) %>% as.data.frame()
+
+```
+
+#082625 - Processed Data files (without removing 4400_IP2)
+```{r}
+
+cd<-as.data.frame(colData(dds91q4))
+rownames(cd)<-paste0(colData(dds91q4)$tag,"_DG",colData(dds91q4)$sample_name)
+
+cd<-cd[,"id",drop=F] %>% t %>% as.data.frame %>% 
+  dplyr::select(
+    "SPN-4_DG4398_Lysate1_2ng" = "spn4_DG4398_Lysate_2ngRNA1",
+    "SPN-4_DG4398_Lysate2_2ng" = "spn4_DG4398_Lysate_2ngRNA2" ,
+    "SPN-4_DG4398_IP1" = "spn4_DG4398_IP1_RNA",
+    "SPN-4_DG4398_IP2" = "spn4_DG4398_IP2_RNA",
+    "SPN-4_DG4398_IP3" = "spn4_DG4398_IP3_RNA",
+    "SPN-4_DG4400_Lysate1_2ng" = "spn4_DG4400_Lysate_2ngRNA1",
+    "SPN-4_DG4400_Lysate2_2ng" = "spn4_DG4400_Lysate_2ngRNA2" ,
+    "SPN-4_DG4400_IP1" = "spn4_DG4400_IP1_RNA",
+    "SPN-4_DG4400_IP2" = "spn4_DG4400_IP2_RNA",
+    "SPN-4_DG4400_IP3" = "spn4_DG4400_IP3_RNA",
+    
+    "LIN-41_DG3923_Lysate1_10ng" = "lin41_DG3923_Lysate_10ngRNA1",
+    "LIN-41_DG3923_Lysate2_10ng" = "lin41_DG3923_Lysate_10ngRNA2" ,
+    "LIN-41_DG3923_IP1_10ng" = "lin41_DG3923_IP1_10ngRNA",
+    "LIN-41_DG3923_IP2_10ng" = "lin41_DG3923_IP2_10ngRNA",
+    "LIN-41_DG3923_IP3_10ng" = "lin41_DG3923_IP3_10ngRNA",
+    "LIN-41_DG4485_Lysate1_10ng" = "lin41_DG4485_Lysate_10ngRNA1",
+    "LIN-41_DG4485_Lysate2_10ng" = "lin41_DG4485_Lysate_10ngRNA2" ,
+    "LIN-41_DG4485_IP1_10ng" = "lin41_DG4485_IP1_10ngRNA",
+    "LIN-41_DG4485_IP2_10ng" = "lin41_DG4485_IP2_10ngRNA",
+    "LIN-41_DG4485_IP3_10ng" = "lin41_DG4485_IP3_10ngRNA",
+    
+    "OMA-1_DG2566_Lysate1_40ng" = "oma1_DG2566_Lysate_40ngRNA1",
+    "OMA-1_DG2566_Lysate2_40ng" = "oma1_DG2566_Lysate_40ngRNA2" ,
+    "OMA-1_DG2566_IP1_40ng" = "oma1_DG2566_IP1_40ngRNA",
+    "OMA-1_DG2566_IP2_40ng" = "oma1_DG2566_IP2_40ngRNA",
+    "OMA-1_DG2566_IP3_40ng" = "oma1_DG2566_IP3_40ngRNA",
+    "OMA-1_DG2581_Lysate1_40ng" = "oma1_DG2581_Lysate_40ngRNA1",
+    "OMA-1_DG2581_Lysate2_40ng" = "oma1_DG2581_Lysate_40ngRNA2" ,
+    "OMA-1_DG2581_IP1_40ng" = "oma1_DG2581_IP1_40ngRNA",
+    "OMA-1_DG2581_IP2_40ng" = "oma1_DG2581_IP2_40ngRNA",
+    "OMA-1_DG2581_IP3_40ng" = "oma1_DG2581_IP3_40ngRNA")
+
+t(cd)
+write.csv(t(cd),"spn4_lin41_oma1_lowinput_indices_082625.csv",quote=F,row.names = T)
+
+fpkm<-as.data.frame(fpkm(dds91q4,robust=T))
+colnames(fpkm)<-paste0(colData(dds91q4)$tag,"_DG",colData(dds91q4)$sample_name)
+
+fpkm <- fpkm %>% as.data.frame %>% 
+  tibble::rownames_to_column(var="gene_id") %>% 
+  left_join(symbols[,c("gene_id","gene_name")]) %>% 
+  dplyr::select(
+    "ENSEMBL_GENE_ID" = "gene_id",
+    "ENSEMBL_GENE_NAME" = "gene_name",
+    "SPN-4_DG4398_Lysate1_2ng" = "spn4_DG4398_Lysate_2ngRNA1",
+    "SPN-4_DG4398_Lysate2_2ng" = "spn4_DG4398_Lysate_2ngRNA2" ,
+    "SPN-4_DG4398_IP1" = "spn4_DG4398_IP1_RNA",
+    "SPN-4_DG4398_IP2" = "spn4_DG4398_IP2_RNA",
+    "SPN-4_DG4398_IP3" = "spn4_DG4398_IP3_RNA",
+    "SPN-4_DG4400_Lysate1_2ng" = "spn4_DG4400_Lysate_2ngRNA1",
+    "SPN-4_DG4400_Lysate2_2ng" = "spn4_DG4400_Lysate_2ngRNA2" ,
+    "SPN-4_DG4400_IP1" = "spn4_DG4400_IP1_RNA",
+    "SPN-4_DG4400_IP2" = "spn4_DG4400_IP2_RNA",
+    "SPN-4_DG4400_IP3" = "spn4_DG4400_IP3_RNA",
+    
+    "LIN-41_DG3923_Lysate1_10ng" = "lin41_DG3923_Lysate_10ngRNA1",
+    "LIN-41_DG3923_Lysate2_10ng" = "lin41_DG3923_Lysate_10ngRNA2" ,
+    "LIN-41_DG3923_IP1_10ng" = "lin41_DG3923_IP1_10ngRNA",
+    "LIN-41_DG3923_IP2_10ng" = "lin41_DG3923_IP2_10ngRNA",
+    "LIN-41_DG3923_IP3_10ng" = "lin41_DG3923_IP3_10ngRNA",
+    "LIN-41_DG4485_Lysate1_10ng" = "lin41_DG4485_Lysate_10ngRNA1",
+    "LIN-41_DG4485_Lysate2_10ng" = "lin41_DG4485_Lysate_10ngRNA2" ,
+    "LIN-41_DG4485_IP1_10ng" = "lin41_DG4485_IP1_10ngRNA",
+    "LIN-41_DG4485_IP2_10ng" = "lin41_DG4485_IP2_10ngRNA",
+    "LIN-41_DG4485_IP3_10ng" = "lin41_DG4485_IP3_10ngRNA",
+    
+    "OMA-1_DG2566_Lysate1_40ng" = "oma1_DG2566_Lysate_40ngRNA1",
+    "OMA-1_DG2566_Lysate2_40ng" = "oma1_DG2566_Lysate_40ngRNA2" ,
+    "OMA-1_DG2566_IP1_40ng" = "oma1_DG2566_IP1_40ngRNA",
+    "OMA-1_DG2566_IP2_40ng" = "oma1_DG2566_IP2_40ngRNA",
+    "OMA-1_DG2566_IP3_40ng" = "oma1_DG2566_IP3_40ngRNA",
+    "OMA-1_DG2581_Lysate1_40ng" = "oma1_DG2581_Lysate_40ngRNA1",
+    "OMA-1_DG2581_Lysate2_40ng" = "oma1_DG2581_Lysate_40ngRNA2" ,
+    "OMA-1_DG2581_IP1_40ng" = "oma1_DG2581_IP1_40ngRNA",
+    "OMA-1_DG2581_IP2_40ng" = "oma1_DG2581_IP2_40ngRNA",
+    "OMA-1_DG2581_IP3_40ng" = "oma1_DG2581_IP3_40ngRNA")
+
+write.csv(fpkm,"spn4_lin41_oma1_lowinput_fpkm_082625.csv",quote=F,row.names = F)
+
+counts<-counts(dds91q4)
+colnames(counts)<-paste0(colData(dds91q4)$tag,"_DG",colData(dds91q4)$sample_name)
+
+counts <- counts %>% as.data.frame %>% 
+  tibble::rownames_to_column(var="gene_id") %>% 
+  left_join(symbols[,c("gene_id","gene_name")]) %>% 
+  dplyr::select(
+    "ENSEMBL_GENE_ID" = "gene_id",
+    "ENSEMBL_GENE_NAME" = "gene_name",
+    "SPN-4_DG4398_Lysate1_2ng" = "spn4_DG4398_Lysate_2ngRNA1",
+    "SPN-4_DG4398_Lysate2_2ng" = "spn4_DG4398_Lysate_2ngRNA2" ,
+    "SPN-4_DG4398_IP1" = "spn4_DG4398_IP1_RNA",
+    "SPN-4_DG4398_IP2" = "spn4_DG4398_IP2_RNA",
+    "SPN-4_DG4398_IP3" = "spn4_DG4398_IP3_RNA",
+    "SPN-4_DG4400_Lysate1_2ng" = "spn4_DG4400_Lysate_2ngRNA1",
+    "SPN-4_DG4400_Lysate2_2ng" = "spn4_DG4400_Lysate_2ngRNA2" ,
+    "SPN-4_DG4400_IP1" = "spn4_DG4400_IP1_RNA",
+    "SPN-4_DG4400_IP2" = "spn4_DG4400_IP2_RNA",
+    "SPN-4_DG4400_IP3" = "spn4_DG4400_IP3_RNA",
+    
+    "LIN-41_DG3923_Lysate1_10ng" = "lin41_DG3923_Lysate_10ngRNA1",
+    "LIN-41_DG3923_Lysate2_10ng" = "lin41_DG3923_Lysate_10ngRNA2" ,
+    "LIN-41_DG3923_IP1_10ng" = "lin41_DG3923_IP1_10ngRNA",
+    "LIN-41_DG3923_IP2_10ng" = "lin41_DG3923_IP2_10ngRNA",
+    "LIN-41_DG3923_IP3_10ng" = "lin41_DG3923_IP3_10ngRNA",
+    "LIN-41_DG4485_Lysate1_10ng" = "lin41_DG4485_Lysate_10ngRNA1",
+    "LIN-41_DG4485_Lysate2_10ng" = "lin41_DG4485_Lysate_10ngRNA2" ,
+    "LIN-41_DG4485_IP1_10ng" = "lin41_DG4485_IP1_10ngRNA",
+    "LIN-41_DG4485_IP2_10ng" = "lin41_DG4485_IP2_10ngRNA",
+    "LIN-41_DG4485_IP3_10ng" = "lin41_DG4485_IP3_10ngRNA",
+    
+    "OMA-1_DG2566_Lysate1_40ng" = "oma1_DG2566_Lysate_40ngRNA1",
+    "OMA-1_DG2566_Lysate2_40ng" = "oma1_DG2566_Lysate_40ngRNA2" ,
+    "OMA-1_DG2566_IP1_40ng" = "oma1_DG2566_IP1_40ngRNA",
+    "OMA-1_DG2566_IP2_40ng" = "oma1_DG2566_IP2_40ngRNA",
+    "OMA-1_DG2566_IP3_40ng" = "oma1_DG2566_IP3_40ngRNA",
+    "OMA-1_DG2581_Lysate1_40ng" = "oma1_DG2581_Lysate_40ngRNA1",
+    "OMA-1_DG2581_Lysate2_40ng" = "oma1_DG2581_Lysate_40ngRNA2" ,
+    "OMA-1_DG2581_IP1_40ng" = "oma1_DG2581_IP1_40ngRNA",
+    "OMA-1_DG2581_IP2_40ng" = "oma1_DG2581_IP2_40ngRNA",
+    "OMA-1_DG2581_IP3_40ng" = "oma1_DG2581_IP3_40ngRNA")
+
+write.csv(counts,"spn4_lin41_oma1_lowinput_counts_082625.csv",quote=F,row.names=F)
+
+```
+
+```{r}
+as.data.frame(colData(dds91q4_spn4<-dds91q4[,colData(dds91q4)$tag=="spn4"]))
+design(dds91q4_spn4)<-~ line + fraction + line:fraction
+dds91q4_spn4<-DESeq(dds91q4_spn4,betaPrior=FALSE)
+summary(res_spn4<-results(dds91q4_spn4,,altHypothesis = "greater",alpha=0.05,lfcThreshold=2, name="fraction_IP_vs_Lysate"))
+res_spn4$symbol<-symbols[match(rownames(res_spn4),symbols$gene_id),"Name"]
+res_spn4$biotype<-symbols[match(rownames(res_spn4),symbols$gene_id),"biotype"]
+
+as.data.frame(colData(dds91q4_lin41<-dds91q4[,colData(dds91q4)$tag=="lin41"]))
+design(dds91q4_lin41)<-~ line + fraction + line:fraction
+dds91q4_lin41<-DESeq(dds91q4_lin41,betaPrior=FALSE)
+summary(res_lin41<-results(dds91q4_lin41,,altHypothesis = "greater",alpha=0.05,lfcThreshold=2, name="fraction_IP_vs_Lysate"))
+res_lin41$symbol<-symbols[match(rownames(res_lin41),symbols$gene_id),"Name"]
+res_lin41$biotype<-symbols[match(rownames(res_lin41),symbols$gene_id),"biotype"]
+
+as.data.frame(colData(dds91q4_oma1<-dds91q4[,colData(dds91q4)$tag=="oma1"]))
+design(dds91q4_oma1)<-~ line + fraction + line:fraction
+dds91q4_oma1<-DESeq(dds91q4_oma1,betaPrior=FALSE)
+summary(res_oma1<-results(dds91q4_oma1,,altHypothesis = "greater",alpha=0.05,lfcThreshold=2, name="fraction_IP_vs_Lysate"))
+res_oma1$symbol<-symbols[match(rownames(res_oma1),symbols$gene_id),"Name"]
+res_oma1$biotype<-symbols[match(rownames(res_oma1),symbols$gene_id),"biotype"]
+
+lengths(degs<-list(spn4=rownames(subset(res_spn4,log2FoldChange > 2 & padj < 0.05)),
+           lin41=rownames(subset(res_lin41,log2FoldChange > 2 & padj < 0.05)),
+           oma1=rownames(subset(res_oma1,log2FoldChange > 2 & padj < 0.05))))
+
+grid.newpage()
+draw.triple.venn(length(degs[["spn4"]]),
+                 length(degs[["oma1"]]),
+                 length(degs[["lin41"]]),
+                 sum(degs[["spn4"]] %in% degs[["oma1"]]),
+                 sum(degs[["oma1"]] %in% degs[["lin41"]]),
+                 sum(degs[["spn4"]] %in% degs[["lin41"]]),
+                 sum(degs[["spn4"]][degs[["spn4"]] %in% degs[["oma1"]]] %in% degs[["lin41"]]),
+                 category=c("spn4","oma1","lin41"),
+                 fill=c(cbPalette[4],cbPalette[6],cbPalette[7]))
+
+upset(fromList(degs), nsets = 3, number.angles = 30, point.size = 3.5, line.size = 2, 
+    mainbar.y.label = "Gene Intersections", sets.x.label = "Genes Per IP", 
+    text.scale = c(1.3, 1.3, 1, 1, 2, 0.75))
+```
+
+
+
+## Make combined list
+```{r}
+#df<-data.frame(gene_id=unique(unlist(degs)))
+df<-data.frame(gene_id=rownames(res_spn4))  #052523 full list for Carolyn
+idx<-match(df$gene_id,symbols$gene_id)
+df$name<-symbols[idx,"gene_name"]
+df$biotype<-symbols[idx,"biotype"]
+#df$chr<-symbols[idx,"chr"]
+
+df$spn4<-df$gene_id %in% degs[["spn4"]]
+df$oma1<-df$gene_id %in% degs[["oma1"]]
+df$lin41<-df$gene_id %in% degs[["lin41"]]
+
+df$spn4_enrichment<-res_spn4[match(df$gene_id,rownames(res_spn4)),"log2FoldChange"]
+df$oma1_enrichment<-res_oma1[match(df$gene_id,rownames(res_oma1)),"log2FoldChange"]
+df$lin41_enrichment<-res_lin41[match(df$gene_id,rownames(res_lin41)),"log2FoldChange"]
+
+df$spn4_adjp<-res_spn4[match(df$gene_id,rownames(res_spn4)),"padj"]
+df$oma1_adjp<-res_oma1[match(df$gene_id,rownames(res_oma1)),"padj"]
+df$lin41_adjp<-res_lin41[match(df$gene_id,rownames(res_lin41)),"padj"]
+
+idx<-match(df$gene_id,f_mean$ensembl_gene_id)
+df<-cbind(df,f_mean[idx,c("spn4:Lysate:sperm_neg","spn4:IP:sperm_neg","oma1:Lysate:sperm_neg","oma1:IP:sperm_neg","lin41:Lysate:sperm_neg","lin41:IP:sperm_neg")])
+
+
+df2<-df %>% dplyr::select("Gene ID"= "gene_id",
+                "Gene Name"="name",
+                "SPN-4"="spn4",
+                "OMA-1"="oma1",
+                "LIN-41"="lin41",
+                "SPN-4 Log2FC Enrichment"="spn4_enrichment",
+                "SPN-4 Adj. P-value"="spn4_adjp",
+                "OMA-1 Log2FC Enrichment"="oma1_enrichment",
+                "OMA-1 Adj. P-value"="oma1_adjp",
+                "LIN-41 Log2FC Enrichment"="lin41_enrichment",
+                "LIN-41 Adj. P-value"="lin41_adjp",
+                "Log2 SPN-4 LYSATE FPKM +0.1"="spn4:Lysate:sperm_neg",
+                "Log2 SPN-4 IP FPKM +0.1"="spn4:IP:sperm_neg",
+                "Log2 OMA-1 LYSATE FPKM +0.1"="oma1:Lysate:sperm_neg",
+                "Log2 OMA-1 IP FPKM +0.1"="oma1:IP:sperm_neg",
+                "Log2 LIN-41 LYSATE FPKM +0.1"="lin41:Lysate:sperm_neg",
+                "Log2 LIN-41 IP FPKM +0.1"="lin41:IP:sperm_neg") 
+
+#genes_of_interest<-c("cpb-1","fog-1","fog-3","oma-1","pie-1","him-3","spo-11","C38C6.8","mab-3","spn-4")
+df[df$name %in% genes_of_interest,]
+
+write.csv(df2,file=paste0("combined_results_",ts,".csv"),row.names = F,quote=F)
+```
+
+
