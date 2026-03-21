@@ -1,0 +1,3 @@
+"Genotype1","Genotype2","Stage","FoldChange","SE","df","null","z.ratio","P_value","Interpretation"
+"WT","tm291","Diakinesis",1.08675351568359,0.0339328430505767,Inf,1,2.6644472267183,0.00771149649753975,"Small/no change"
+"WT","tm291","Post-diakinesis",1.06195283506526,0.0469353633928601,Inf,1,1.36002920563407,0.173820681967058,"Small/no change"

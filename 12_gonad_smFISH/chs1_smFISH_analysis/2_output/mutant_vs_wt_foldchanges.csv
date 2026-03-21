@@ -1,0 +1,5 @@
+"contrast","Stage","FoldChange","SE","df","null","z.ratio","P_value","Interpretation"
+"tm291 / WT","Diakinesis",0.953919370520365,0.0340222255481013,Inf,1,-1.32273012604966,0.371850282523897,"Small/no change"
+"puf3 puf11 / WT","Diakinesis",1.02248562808461,0.0401259382932919,Inf,1,0.566629890905189,1,"Small/no change"
+"tm291 / WT","Post-diakinesis",0.960992033485471,0.0482217713375963,Inf,1,-0.792941955207705,0.85562328352039,"Small/no change"
+"puf3 puf11 / WT","Post-diakinesis",0.584610251759611,0.0310632715235268,Inf,1,-10.1027531744826,1.0742531204914e-23,"Moderate decrease"
