@@ -1140,17 +1140,17 @@ dev.off()
 
 ```{r AlLZscoredLineplots, echo = TRUE, message = FALSE, warning = FALSE} 
 
-clustered_scaled_wide_ann2
+#clustered_scaled_wide_ann2
 
 z_mean_by_RBP <- as.data.frame(clustered_scaled_wide_ann2) %>%
   group_by(IP) %>%
   summarise_all(mean)
 
-z_mean_by_RBP
+#z_mean_by_RBP
 
 # convert the meanbycluster into longform data to plot using ggplot2:
 z_mean_by_RBP <- as.data.frame(z_mean_by_RBP)
-z_mean_by_RBP
+#z_mean_by_RBP
 dim(z_mean_by_RBP)
 longer_z_means_by_RBP <- pivot_longer(z_mean_by_RBP, cols = 2:27, names_to = "cell",
                                         values_to = "intensity")
@@ -1234,7 +1234,7 @@ longer_changing_ann2$gene <- factor(longer_changing_ann2$gene)
 
 # Plot
 ggplot(longer_changing_ann2, aes(x = cell, y = intensity, group = gene))+
-  geom_line(aes(colour = gene), show.legend = FALSE, alpha = 0.2) +
+  geom_line(aes(colour = gene), show.legend = FALSE, alpha = 0.1) +
   facet_grid(rows = vars(RBP_bound))
 
 
@@ -1251,7 +1251,7 @@ filename5 <- paste("../03_outputPlots/", today, "_multiLineplots_SPN4Only_zscore
 pdf(filename5, width = 6, height = 4)
 
 ggplot(longer_changing_ann2, aes(x = cell, y = intensity, group = gene))+
-  geom_line(aes(colour = gene), show.legend = FALSE, alpha = 0.2) +
+  geom_line(aes(colour = gene), show.legend = FALSE, alpha = 0.1) +
   facet_grid(rows = vars(RBP_bound))
 
 dev.off()
