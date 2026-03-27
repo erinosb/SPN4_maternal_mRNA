@@ -360,7 +360,7 @@ tTest_stats
 ``` r
 # Plot abundance scaled by estimated cell type volume 
 u <- ggplot(scaled_lin41_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
-    geom_boxplot() +
+    geom_boxplot(outlier.shape = NA) +
     geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
     labs(title = "lin-41 mRNA abundance by volume",
        x = "Cell Identity",
@@ -374,7 +374,7 @@ u
 # Plot abundance scaled by estimated cell type volume 
 
 v <- ggplot(scaled_set3_selection, aes(x=label, y=abundance_by_vol, fill=lineage)) + 
-    geom_boxplot() +
+    geom_boxplot(outlier.shape = NA) +
     geom_jitter(shape=16, position=position_jitter(0.2), size = 1) +
     labs(title = "set-3 mRNA abundance by volume",
        x = "Cell Identity",
